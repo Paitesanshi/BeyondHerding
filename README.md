@@ -2,7 +2,7 @@
 
 
 <p align="center">
-  <img src="assets/logo.gif" width="500"/>
+  <img src="assets/logo.gif" width="700"/>
 </p>
 
 <div align="center">
