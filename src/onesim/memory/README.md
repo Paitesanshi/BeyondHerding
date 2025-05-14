@@ -117,6 +117,8 @@ The Memory module uses the Strategy pattern to enable different memory managemen
 
 ### Concrete Strategies
 
+**`ListStrategy`** (in `strategy/list_strategy.py`) implements a simple list-based memory strategy.
+
 **`ShortLongStrategy`** (in `strategy/short_long_strategy.py`) implements dual-store memory management with short-term and long-term storage. It provides automatic reflection triggers based on memory importance.
 
 ### Using Memory Strategies

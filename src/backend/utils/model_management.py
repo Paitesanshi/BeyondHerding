@@ -14,14 +14,14 @@ from backend.models.model_library import get_model_library
 # 全局变量
 MODEL = None
 MODEL_CONFIG_NAME = None
-MODEL_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(os.getcwd())), 
-                                "config", "llm", "model_config.json")
+MODEL_CONFIG_PATH = os.path.join(os.getcwd(), 
+                                "config", "model_config.json")
 DEFAULT_CONFIG = {}  # 将从load_default_config初始化
 
 def load_default_config():
     """从配置文件加载默认配置"""
     global DEFAULT_CONFIG
-    config_path = os.path.join(os.path.dirname(os.path.abspath(os.getcwd())), 
+    config_path = os.path.join(os.getcwd(), 
                               "config", "config.json")
     try:
         if os.path.exists(config_path):

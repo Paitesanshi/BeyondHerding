@@ -25,11 +25,11 @@ router = APIRouter(
 USER_CONFIGS = {}
 
 # 模型配置路径
-MODEL_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(os.getcwd())), 
-                                "config", "llm", "model_config.json")
+MODEL_CONFIG_PATH = os.path.join(os.getcwd(), 
+                                "config", "model_config.json")
 
 # 默认配置路径
-DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(os.getcwd())), 
+DEFAULT_CONFIG_PATH = os.path.join(os.getcwd(), 
                                   "config", "config.json")
 
 def load_default_config():

@@ -10,12 +10,10 @@ from loguru import logger
 # Import routers
 from backend.routers import (
     domains,
-    models,
     odd,
     pipeline,
     config,
     simulation,
-    training,
     agent,
     feedback,
     monitor
@@ -42,12 +40,10 @@ app.add_middleware(
 
 # Include all routers
 app.include_router(domains.router)
-app.include_router(models.router)
 app.include_router(odd.router)
 app.include_router(pipeline.router)
 app.include_router(config.router)
 app.include_router(simulation.router)
-app.include_router(training.router)
 app.include_router(agent.router)
 app.include_router(feedback.router)
 app.include_router(monitor.router)

@@ -1,7 +1,8 @@
-# YuLan-OneSim (玉兰-万象)
+# <img src="assets/onesim.png" alt="YuLan Flower" width="20" style="vertical-align: middle;"> YuLan-OneSim (玉兰-万象)
+
 
 <p align="center">
-  <img src="assets/onesim.png" width="200"/>
+  <img src="assets/logo.gif" width="800"/>
 </p>
 
 <div align="center">
@@ -13,7 +14,7 @@
 [![Stars](https://img.shields.io/github/stars/RUC-GSAI/YuLan-OneSim)](https://github.com/RUC-GSAI/YuLan-OneSim/stargazers)
 
 
-**YuLan-OneSim: A Next Generation Social Simulator with Large Language Models**
+## YuLan-OneSim:Next Generation Social Simulator with Large Language Models
 
 </div>
 
@@ -45,10 +46,11 @@ YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/YuLan-OneSim.git
+git clone https://github.com/RUC-GSAI/YuLan-OneSim
 cd YuLan-OneSim
 
 pip install -e .  # Install in editable mode
+pip install -e .[tune]  # Install with tuning dependencies if needed
 ```
 
 ## 🚀 Quick Start

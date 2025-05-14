@@ -656,18 +656,19 @@ export default {
       }
     }
 
+    //这里不知道干嘛的，导致会出现错误的agentCounts，所以暂时注释掉
     // Try to load saved agent counts
-    const savedCounts = localStorage.getItem("agentCounts");
-    if (savedCounts) {
-      try {
-        const parsedCounts = JSON.parse(savedCounts);
-        if (parsedCounts && typeof parsedCounts === "object") {
-          this.agentCounts = parsedCounts;
-        }
-      } catch (error) {
-        console.error("Error parsing saved agent counts:", error);
-      }
-    }
+    // const savedCounts = localStorage.getItem("agentCounts");
+    // if (savedCounts) {
+    //   try {
+    //     const parsedCounts = JSON.parse(savedCounts);
+    //     if (parsedCounts && typeof parsedCounts === "object") {
+    //       this.agentCounts = parsedCounts;
+    //     }
+    //   } catch (error) {
+    //     console.error("Error parsing saved agent counts:", error);
+    //   }
+    // }
   },
   computed: {
     canProceed() {
@@ -938,7 +939,8 @@ export default {
       this.configuredAgentTypes.add(this.currentAgentType);
 
       // Save changes to localStorage (simplified approach)
-      this.saveConfiguration();
+      //这里不应该保存数据，只是将数据记录一下
+      // this.saveConfiguration();
 
       // Close modal
       this.showPropertyModal = false;
@@ -1009,10 +1011,6 @@ export default {
         category: this.$route.query.category,
       };
 
-      // axios.post("/api/pipeline/generate_profiles",data).then((response) => {
-      //   console.log("response", response);
-      //   this.isLoading = false;
-      // });
       this.showAddModal = false;
     },
 
