@@ -18,7 +18,7 @@
 </div>
 
 ## 📰 News
-- **[May 2025]** 🎉 Initial release of YuLan-OneSim! Our paper is now available on [arXiv](https://arxiv.org/abs/2505.07581).
+- **[2025-5-13]** 🎉 Initial release of YuLan-OneSim! Our paper is now available on [arXiv](https://arxiv.org/abs/2505.07581).
 
 ## 📋 Overview
 
