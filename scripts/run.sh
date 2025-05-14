@@ -1,1 +1,1 @@
-python src/main.py --config config/config.json --model_config config/model_config_7b.json --mode single --env labor_market_matching_process
+python src/main.py --config config/config.json --model_config config/model_config.json --mode single --env labor_market_matching_process

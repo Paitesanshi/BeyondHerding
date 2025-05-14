@@ -8,7 +8,7 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2505.07581-b31b1b.svg)](https://arxiv.org/abs/2505.07581)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/RUC-GSAI/YuLan-OneSim)](https://github.com/RUC-GSAI/YuLan-OneSim/stargazers)
 
