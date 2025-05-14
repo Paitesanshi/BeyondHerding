@@ -14,7 +14,7 @@
 [![Stars](https://img.shields.io/github/stars/RUC-GSAI/YuLan-OneSim)](https://github.com/RUC-GSAI/YuLan-OneSim/stargazers)
 
 
-## YuLan-OneSim: A Next Generation Social Simulator with Large Language Models
+## YuLan-OneSim: A Next Generation Social Simulator with LLMs
 
 </div>
 
