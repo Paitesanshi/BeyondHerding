@@ -36,6 +36,7 @@ YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages
 
 - 🔍 **AI social researcher**: Autonomous research from topic proposal to report generation
 
+
 <p align="center">
   <img src="assets/overall.png" width="800"/>
 </p>
