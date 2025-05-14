@@ -170,6 +170,24 @@ In the low-price range (0.05–0.25), the strong agreement between simulated and
 Despite this deviation, the overall results demonstrate that YuLan-OneSim can approximate real-world economic distribution patterns with high accuracy, validating its potential and practicality for applications in social science research.
 
 
+3️⃣ Evaluation of the AI Social Researcher
+
+<p align="center">
+  <img src="assets/3.png" width="800"/>
+</p>
+
+<p align="center">
+  <img src="assets/3-1.png" width="800"/>
+</p>
+
+In the evaluation of the AI Social Researcher, we focus primarily on the quality of the generated simulation scenario (ODD protocol) and the final analytical report. The results show that the AI Social Researcher performs well across all evaluation criteria for scenario design, achieving an average overall score of 4.13 out of 5. Notably, it excels in the "Feasibility" dimension, with an average score of 4.88, indicating its strong ability to translate abstract research questions into executable simulation plans. It also performs well in "Relevance" (average score of 4.25), ensuring that the generated scenarios are closely aligned with the user-defined research topics.
+
+In terms of report generation, the AI Social Researcher demonstrates solid performance in "Structural Organization" (average score of 4.00) and "Content Completeness and Accuracy" (average score of 3.63), showing that it can effectively structure analysis results into logically coherent and well-supported technical reports. The top-performing reports include “Auction Market Dynamics” (Economics) and “Court Trial Simulation” (Law), each receiving an overall score of 4.0.
+
+However, there remains room for improvement, particularly in the dimensions of "Insightfulness" (3.25) and "Practicality" (3.00). While the AI Social Researcher is competent in data analysis and reporting, it still struggles to extract deeper research insights and formulate actionable recommendations from simulation results. For instance, in the scenario “Labor Market Matching Process,” the report received a low practicality score of 2.0, highlighting the current limitations of the model in certain domain-specific applications.
+
+
+
 
 ## 👥 Contributing
 
