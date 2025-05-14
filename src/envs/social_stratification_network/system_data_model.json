@@ -1,0 +1,123 @@
+{
+    "environment": {
+        "variables": []
+    },
+    "agents": {
+        "Individual": {
+            "variables": [
+                {
+                    "name": "social_network",
+                    "type": "list",
+                    "default_value": null
+                },
+                {
+                    "name": "trust_threshold",
+                    "type": "float",
+                    "default_value": null
+                },
+                {
+                    "name": "exchange_partners",
+                    "type": "list",
+                    "default_value": null
+                },
+                {
+                    "name": "exchange_value",
+                    "type": "float",
+                    "default_value": null
+                },
+                {
+                    "name": "risk_assessment",
+                    "type": "float",
+                    "default_value": null
+                },
+                {
+                    "name": "exchange_history",
+                    "type": "list",
+                    "default_value": null
+                },
+                {
+                    "name": "resources_exchanged",
+                    "type": "dict",
+                    "default_value": null
+                },
+                {
+                    "name": "social_capital",
+                    "type": "float",
+                    "default_value": null
+                }
+            ]
+        },
+        "Family": {
+            "variables": [
+                {
+                    "name": "collective_resources",
+                    "type": "float",
+                    "default_value": null
+                },
+                {
+                    "name": "education_strategy",
+                    "type": "str",
+                    "default_value": null
+                },
+                {
+                    "name": "education_investment",
+                    "type": "float",
+                    "default_value": null
+                },
+                {
+                    "name": "admission_decisions",
+                    "type": "list",
+                    "default_value": null
+                },
+                {
+                    "name": "allocated_resources",
+                    "type": "float",
+                    "default_value": null
+                }
+            ]
+        },
+        "EducationalInstitution": {
+            "variables": [
+                {
+                    "name": "admission_criteria",
+                    "type": "dict",
+                    "default_value": null
+                },
+                {
+                    "name": "applications_received",
+                    "type": "list",
+                    "default_value": null
+                },
+                {
+                    "name": "selected_students",
+                    "type": "list",
+                    "default_value": null
+                }
+            ]
+        },
+        "Employer": {
+            "variables": [
+                {
+                    "name": "candidates_list",
+                    "type": "list",
+                    "default_value": null
+                },
+                {
+                    "name": "evaluation_criteria",
+                    "type": "dict",
+                    "default_value": null
+                },
+                {
+                    "name": "evaluation_results",
+                    "type": "dict",
+                    "default_value": null
+                },
+                {
+                    "name": "hiring_decision",
+                    "type": "str",
+                    "default_value": null
+                }
+            ]
+        }
+    }
+}

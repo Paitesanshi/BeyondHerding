@@ -1,0 +1,46 @@
+{
+    "Individual": {
+        "id": "1",
+        "age": "30",
+        "economic": "medium",
+        "cultural": "high",
+        "social": "broad",
+        "symbolic": "recognized",
+        "occupation": "engineer",
+        "income": "50000",
+        "exchange_history": "active",
+        "reciprocity_expectation": "high",
+        "trust_threshold": "0.75",
+        "social_network": "extensive",
+        "generation": "2"
+    },
+    "Family": {
+        "id": "1",
+        "members": [
+            "parent1",
+            "parent2",
+            "child1"
+        ],
+        "collective_resources": "wealthy",
+        "inheritance_rules": "equal",
+        "education_investment": "high",
+        "social_status": "upper",
+        "residential_area": "urban"
+    },
+    "EducationalInstitution": {
+        "type": "university",
+        "quality": "prestigious",
+        "admission_criteria": "strict",
+        "tuition_fees": "high",
+        "prestige": "elite",
+        "alumni_network": "strong"
+    },
+    "Employer": {
+        "industry": "technology",
+        "size": "large",
+        "hiring_criteria": "competitive",
+        "compensation_structure": "generous",
+        "promotion_paths": "clear",
+        "status_value": "high"
+    }
+}
