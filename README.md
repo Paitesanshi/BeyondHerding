@@ -1,4 +1,4 @@
-# 🌸 YuLan-OneSim (玉兰-万象)
+# YuLan-OneSim (玉兰-万象)
 
 <p align="center">
   <img src="assets/onesim.png" width="200"/>
