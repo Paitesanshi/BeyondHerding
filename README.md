@@ -27,9 +27,13 @@ YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages
 ## ✨ Key Features
 
 - 🔄 **Code-free scenario construction**: Design complex simulations through natural language conversations
+  
 - 📚 **Comprehensive default scenarios**: 50+ default scenarios across 8 major social science domains
+
 - 🧠 **Evolvable simulation**: Models that automatically improve based on external feedback
+
 - 🚀 **Large-scale simulation**: Distributed architecture supporting up to 100,000 agents
+
 - 🔍 **AI social researcher**: Autonomous research from topic proposal to report generation
 
 <p align="center">
