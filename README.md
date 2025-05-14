@@ -85,18 +85,15 @@ Access the web interface (frontend) at `http://localhost:5173` and the API docum
 
 YuLan-OneSim uses JSON configuration files to control simulation behavior and model settings.
 
-<details>
-<summary>Click to expand configuration details</summary>
 
-### Simulation Configuration (`config/config.json`)
+#### Simulation Configuration (`config/config.json`)
 
 Controls general simulation settings including environment, agents, database, and distribution parameters.
 
-### Model Configuration (`config/model_config.json`)
+#### Model Configuration (`config/model_config.json`)
 
 Specifies the LLMs and embedding models used by the simulator, including provider details and generation parameters.
 
-</details>
 
 ## 📁 Project Structure
 
@@ -115,15 +112,14 @@ Specifies the LLMs and embedding models used by the simulator, including provide
 
 ## 📊 Examples
 
-<details>
-<summary>Labor Market Simulation</summary>
+#### Labor Market Simulation
 
 ```bash
 yulan-onesim-cli --config config/config.json --model_config config/model_config.json --mode single --env labor_market_matching_process
 ```
 
 This simulation models job matching dynamics between employers and job seekers, analyzing equilibrium wage patterns and matching efficiency.
-</details>
+
 
 
 ## 🧪 Experiments
