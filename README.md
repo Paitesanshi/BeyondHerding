@@ -1,4 +1,4 @@
-# <img src="assets/onesim.png" alt="YuLan Flower" width="40" style="vertical-align: middle;"> YuLan-OneSim (玉兰-万象)
+# <img src="assets/onesim.png" alt="YuLan Flower" width="35" style="vertical-align: middle;"> YuLan-OneSim (玉兰-万象)
 
 
 <p align="center">
