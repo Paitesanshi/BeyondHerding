@@ -49,9 +49,6 @@ class SimulationConfig:
     max_rounds: int = 1
     interval: float = 60.0
     bus_idle_timeout: float = 120.0  # Time to wait before considering event bus as idle
-    completion_rate_threshold: float = 0.5  # New field: Minimum completion rate (e.g., 80%)
-    generate_event_flow: bool = False  # Generate event flow visualization
-    event_flow_output_file: Optional[str] = None  # Output file for event flow data (JSON)
     export_training_data: bool = False  # Whether to export training data
     export_event_data: bool = False
     additional_config: Dict[str, Any] = field(default_factory=dict)
@@ -94,12 +91,9 @@ class BasicSimEnv:
             config['bus_idle_timeout'] = config.get('bus_idle_timeout', 10.0)
             self.config = SimulationConfig(
                 mode=SimulationMode(config.get('mode', SimulationMode.TIMED.value)),
-                max_rounds=config.get('max_rounds', 1),
-                interval=config.get('interval', 30.0),
-                bus_idle_timeout=config.get('bus_idle_timeout', 60.0),
-                completion_rate_threshold=config.get('completion_rate_threshold', 0.3),
-                generate_event_flow=config.get('generate_event_flow', False),
-                event_flow_output_file=config.get('event_flow_output_file', None),
+                max_rounds=config.get('max_rounds', 3),
+                interval=config.get('interval', 60.0),
+                bus_idle_timeout=config.get('bus_idle_timeout', 30.0),
                 export_training_data=config.get('export_training_data', False),
                 export_event_data=config.get('export_event_data',False),
                 additional_config=config.get('additional_config', {}),
@@ -450,14 +444,10 @@ class BasicSimEnv:
                 await self._trail_manager.increment_step(self.trail_id)
                     # Queue metrics for DB storage if trail_id is available
 
-            # Completion rate
-            completion_rate = sum(1 for count in self.ended_agents.values() if count >= self.current_step) / max(1, len(self.ended_agents))
-            self.data['step_data'][self.current_step]['completion_rate'] = completion_rate 
             if self.trail_id and self._env_state_manager:
                 metrics = {
                     'step_id': self.current_step, 
                     'duration': self.data['step_data'][self.current_step]['duration'],
-                    'completion_rate': completion_rate
                 }
                 
                 # Update trail metadata with these metrics
@@ -695,44 +685,24 @@ class BasicSimEnv:
             logger.debug(f"Skipping step completion check - paused: {self._pause_signal.is_set()}, terminated: {self.is_terminated()}")
             return
 
-        # Calculate the completion rate
-        total_agents = len(self.ended_agents)
-        completed_agents = sum(1 for count in self.ended_agents.values() if count >= self.current_step)
-        completion_rate = completed_agents / total_agents if total_agents > 0 else 0.0
-
-        # Calculate dynamic timeout based on completion rate
-        # Formula: As completion_rate increases, timeout decreases
-        # When completion_rate = threshold, timeout = bus_idle_timeout
-        # When completion_rate = 1.0, timeout = bus_idle_timeout * 0.2 (80% reduction)
-        dynamic_timeout = self.config.bus_idle_timeout # Default timeout
-        if completion_rate >= self.config.completion_rate_threshold and self.config.completion_rate_threshold < 1.0:
-             # Above threshold - scale down timeout as completion rate increases
-             # Linear interpolation between full timeout and 20% of timeout
-             scale_factor = 1.0 - 0.8 * ((completion_rate - self.config.completion_rate_threshold) /
-                                    max(1e-6, 1.0 - self.config.completion_rate_threshold)) # Avoid division by zero
-             dynamic_timeout = self.config.bus_idle_timeout * max(0.2, scale_factor)
-        elif completion_rate < self.config.completion_rate_threshold:
-             # Below threshold - use longer timeout
-             dynamic_timeout = self.config.bus_idle_timeout * 1.5
+        # Calculate dynamic timeout
+        idle_timeout = self.config.bus_idle_timeout # Default timeout
 
         # Round can complete if either:
         # 1. All agents have terminated
-        # 2. No events for dynamic time (based on completion rate)
+        # 2. No events for dynamic time
         all_terminated = all(count >= self.current_step for count in self.ended_agents.values())
         long_idle = (
-            (current_time - self._last_event_time > dynamic_timeout) and
+            (current_time - self._last_event_time > idle_timeout) and
             self.event_bus.is_empty() and
-            self._queue.empty() and
-            completion_rate >= self.config.completion_rate_threshold  # Still require minimum threshold
+            self._queue.empty()
         )
-        logger.info(f"Step {self.current_step} (Round Mode) completion rate: {completion_rate:.2%}")
 
         # Save round data before moving to next round
         
-
         if all_terminated or long_idle:
             if long_idle:
-                logger.warning(f"Step {self.current_step} (Round Mode) completed due to idle timeout with completion rate {completion_rate:.2%} (dynamic timeout: {dynamic_timeout:.1f}s)")
+                logger.warning(f"Step {self.current_step} (Round Mode) completed due to idle timeout (dynamic timeout: {idle_timeout:.1f}s)")
 
             step_start_time_key = f'step_{self.current_step}_time_start'
             step_duration = current_time - self.data.get(step_start_time_key, current_time)
@@ -745,10 +715,8 @@ class BasicSimEnv:
 
             logger.info(f"Step {self.current_step} (Round Mode) Time: {step_duration:.2f} seconds")
             logger.info(f"Total Time: {self.tot_time:.2f} seconds")
-            logger.info(f"Completion Rate: {completion_rate:.2%}")
             # Save round data *before* potentially stopping
             await self._save_step_data(self.current_step)
-
 
             if long_idle:
                 # Log which agents didn't complete
@@ -899,10 +867,6 @@ class BasicSimEnv:
         current_time = time.time()
         step_start_time_key = f'step_{self.current_step}_time_start'
         self.data['step_data'][self.current_step]['duration'] = current_time - self.data.get(step_start_time_key, current_time)
-        
-        # Completion rate
-        completion_rate = sum(1 for count in self.ended_agents.values() if count >= self.current_step) / max(1, len(self.ended_agents))
-        self.data['step_data'][self.current_step]['completion_rate'] = completion_rate
         
         # Count events in this round
         event_count = len(self._pending_events) if hasattr(self, '_pending_events') else 0
@@ -1082,18 +1046,6 @@ class BasicSimEnv:
                     event = await self._create_start_event(target_id)
                     await self.event_bus.dispatch_event(event)
 
-    def check_round_end(self) -> bool:
-        """Check if current round should end."""
-        # First check if event bus and local queue are empty
-        if not self.event_bus.is_empty() or not self._queue.empty():
-            return False
-            
-        # Then check if all required agents have ended
-        for agent_type, ids in self.end_targets.items():
-            for agent_id in ids:
-                if self.ended_agents[agent_id] < self.current_step:
-                    return False
-        return True
 
     def terminate(self, event: Event, **kwargs: Any) -> None:
         """Handle agent termination with bus state awareness. This should be async due to lock usage"""

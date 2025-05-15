@@ -58,12 +58,9 @@ def read_root():
 # 在这里定义需要在应用启动时执行的代码
 @app.on_event("startup")
 async def startup_event():
-    # 确保必要的目录存在
-    os.makedirs("envs", exist_ok=True)
-    os.makedirs("data", exist_ok=True)
     
     # 日志配置
-    log_dir = os.path.join("..", "logs")
+    log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
     logger.add(os.path.join(log_dir, "app.log"), rotation="500 MB", compression="zip")
     

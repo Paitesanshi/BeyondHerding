@@ -21,19 +21,6 @@
             "generate_args": {
                 "temperature": 0
             }
-        },
-        {
-            "provider": "vllm",
-            "config_name": "vllm-qwen-3",
-            "model_name": "Qwen2.5-14B-Instruct",
-            "api_key": "sk-xxx",
-            "client_args": {
-                "max_retries": 3,
-                "base_url": "http://localhost:9887/v1/"
-            },
-            "generate_args": {
-                "temperature": 0
-            }
         }
     ],
     "embedding": [

@@ -1004,17 +1004,6 @@ class MonitorManager:
         # Set style
         #plt.style.use('seaborn')
         
-        # Plot completion rate over time
-        if 'completion_rate' in metrics_data:
-            plt.figure(figsize=(10, 6))
-            plt.plot(metrics_data['completion_rate'], marker='o')
-            plt.title('Completion Rate Over Time')
-            plt.xlabel('Step')
-            plt.ylabel('Completion Rate')
-            plt.grid(True)
-            plt.savefig(os.path.join(save_dir, 'completion_rate.png'))
-            plt.close()
-        
         # Plot step duration
         if 'round_duration' in metrics_data:
             plt.figure(figsize=(10, 6))
@@ -1067,10 +1056,6 @@ class MonitorManager:
         # Extract completion rate
         if 'step_data' in env_data:
             step_data = env_data['step_data']
-            metrics['completion_rate'] = [
-                step_data[r]['completion_rate'] 
-                for r in sorted(step_data.keys())
-            ]
 
             metrics['round_duration'] = [
                 step_data[r]['duration'] 
