@@ -283,6 +283,8 @@ class DatabaseManager:
             feedback TEXT,
             rating FLOAT,
             reason TEXT,
+            agent_type VARCHAR(100),
+            action VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (agent_id, trail_id, universe_id) 
                 REFERENCES agents(agent_id, trail_id, universe_id)
