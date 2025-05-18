@@ -42,7 +42,9 @@ class DecisionManager:
                              timestamp: Optional[datetime] = None,
                              rating: Optional[float] = None,
                              feedback: Optional[str] = None,
-                             reason: Optional[str] = None) -> str:
+                             reason: Optional[str] = None,
+                             agent_type: Optional[str] = None,
+                             action: Optional[str] = None) -> str:
         """
         Record an agent decision
         
@@ -60,6 +62,8 @@ class DecisionManager:
             rating: Optional rating (float)
             feedback: Optional feedback
             reason: Optional reason
+            agent_type: Optional type of the agent
+            action: Optional action taken by the agent
             
         Returns:
             decision_id: UUID of the recorded decision
@@ -79,9 +83,9 @@ class DecisionManager:
         INSERT INTO agent_decisions (
             decision_id, trail_id, universe_id, agent_id, step, timestamp,
             event_id, context, prompt, output, processing_time, feedback,
-            rating, reason
+            rating, reason, agent_type, action
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING decision_id
         """
         
@@ -101,7 +105,9 @@ class DecisionManager:
                 processing_time,
                 feedback,
                 rating,
-                reason
+                reason,
+                agent_type,
+                action
             )
             logger.debug(f"Recorded decision for agent {agent_id} in trail {trail_id}, step {step}")
             return decision_id
