@@ -30,7 +30,7 @@
         "to_agent_type": "NeutralMember",
         "to_action_name": "initiate_interaction",
         "from_action_id": 0,
-        "to_action_id": 4,
+        "to_action_id": 3,
         "event_name": "StartEvent",
         "event_info": "Initial trigger for neutral member interaction",
         "fields": []
@@ -42,7 +42,7 @@
         "to_agent_type": "TeamLeader",
         "to_action_name": "provide_feedback",
         "from_action_id": 1,
-        "to_action_id": 5,
+        "to_action_id": 4,
         "event_name": "InteractionEvent",
         "event_info": "New employee interacts with team leader",
         "fields": [
@@ -73,7 +73,7 @@
         "to_agent_type": "TeamLeader",
         "to_action_name": "provide_feedback",
         "from_action_id": 2,
-        "to_action_id": 5,
+        "to_action_id": 4,
         "event_name": "InteractionEvent",
         "event_info": "Experienced employee interacts with team leader",
         "fields": [
@@ -99,37 +99,12 @@
     },
     "3": {
         "id": 3,
-        "from_agent_type": "ExperiencedEmployee",
-        "from_action_name": "receive_feedback",
-        "to_agent_type": "EnvAgent",
-        "to_action_name": "terminate",
-        "from_action_id": 3,
-        "to_action_id": -1,
-        "event_name": "FeedbackProcessedEvent",
-        "event_info": "Experienced employee receives feedback and process completes",
-        "fields": [
-            {
-                "name": "feedback_type",
-                "type": "string",
-                "default_value": "positive",
-                "description": "Type of feedback processed"
-            },
-            {
-                "name": "processing_status",
-                "type": "string",
-                "default_value": "completed",
-                "description": "Status of feedback processing"
-            }
-        ]
-    },
-    "4": {
-        "id": 4,
         "from_agent_type": "NeutralMember",
         "from_action_name": "initiate_interaction",
         "to_agent_type": "TeamLeader",
         "to_action_name": "provide_feedback",
-        "from_action_id": 4,
-        "to_action_id": 5,
+        "from_action_id": 3,
+        "to_action_id": 4,
         "event_name": "InteractionEvent",
         "event_info": "Neutral member interacts with team leader",
         "fields": [
@@ -153,14 +128,14 @@
             }
         ]
     },
-    "5": {
-        "id": 5,
+    "4": {
+        "id": 4,
         "from_agent_type": "TeamLeader",
         "from_action_name": "provide_feedback",
         "to_agent_type": "EmotionalAnalyzer",
         "to_action_name": "analyze_emotion",
-        "from_action_id": 5,
-        "to_action_id": 6,
+        "from_action_id": 4,
+        "to_action_id": 5,
         "event_name": "FeedbackEvent",
         "event_info": "Team leader provides feedback to emotional analyzer",
         "fields": [
@@ -178,38 +153,13 @@
             }
         ]
     },
-    "6": {
-        "id": 6,
-        "from_agent_type": "EmotionalAnalyzer",
-        "from_action_name": "analyze_emotion",
-        "to_agent_type": "ExperiencedEmployee",
-        "to_action_name": "receive_feedback",
-        "from_action_id": 6,
-        "to_action_id": 3,
-        "event_name": "EmotionAnalyzedEvent",
-        "event_info": "Emotional analysis completed and sent to experienced employee",
-        "fields": [
-            {
-                "name": "emotion_analysis_result",
-                "type": "string",
-                "default_value": "neutral",
-                "description": "Result of the emotional analysis"
-            },
-            {
-                "name": "analysis_status",
-                "type": "string",
-                "default_value": "completed",
-                "description": "Status of the emotional analysis process"
-            }
-        ]
-    },
-    "7": {
-        "id": 7,
+    "5": {
+        "id": 5,
         "from_agent_type": "EmotionalAnalyzer",
         "from_action_name": "analyze_emotion",
         "to_agent_type": "EnvAgent",
         "to_action_name": "terminate",
-        "from_action_id": 6,
+        "from_action_id": 5,
         "to_action_id": -1,
         "event_name": "EmotionAnalyzedEvent",
         "event_info": "Emotional analysis completed and process terminates",

@@ -83,46 +83,11 @@
                     "description": "Updates the emotional state of the experienced employee based on the outcome of the interaction."
                 }
             ]
-        },
-        {
-            "id": 3,
-            "name": "receive_feedback",
-            "condition": null,
-            "description": "The action where an experienced employee receives feedback from the emotional analyzer, processing it to adjust their emotional state and work motivation.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "feedback_type",
-                    "type": "string",
-                    "context": "event",
-                    "description": "Specifies the type of feedback received, such as positive or constructive."
-                },
-                {
-                    "name": "processing_status",
-                    "type": "string",
-                    "context": "event",
-                    "description": "Indicates the status of feedback processing, such as completed."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "emotional_state",
-                    "type": "string",
-                    "context": "agent",
-                    "description": "Updates the emotional state of the experienced employee based on the feedback received."
-                },
-                {
-                    "name": "work_motivation",
-                    "type": "string",
-                    "context": "agent",
-                    "description": "Adjusts the work motivation level of the experienced employee based on the feedback received."
-                }
-            ]
         }
     ],
     "NeutralMember": [
         {
-            "id": 4,
+            "id": 3,
             "name": "initiate_interaction",
             "condition": null,
             "description": "The action where a neutral member initiates a social interaction with a team leader to participate in team dynamics and receive feedback.",
@@ -165,7 +130,7 @@
     ],
     "TeamLeader": [
         {
-            "id": 5,
+            "id": 4,
             "name": "provide_feedback",
             "condition": "Reception of InteractionEvent from any employee",
             "description": "The action where a team leader provides feedback to an employee or emotional analyzer to influence their emotional state and work behavior.",
@@ -196,7 +161,7 @@
     ],
     "EmotionalAnalyzer": [
         {
-            "id": 6,
+            "id": 5,
             "name": "analyze_emotion",
             "condition": "Reception of FeedbackEvent",
             "description": "The action where the emotional analyzer processes feedback received from a team leader to assess and update the emotional state of an employee.",
