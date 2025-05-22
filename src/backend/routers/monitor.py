@@ -192,7 +192,7 @@ async def prepare_general_metrics(env_name: str):
         # Prepare token usage data if available
         token_data = {}
         # Initialize with starting point for line charts
-        token_data["total_tokens_by_round"] = {"xAxis": ["Start"], "series": [0]}
+        token_data["total_tokens_by_step"] = {"xAxis": ["Start"], "series": [0]}
 
         for r in rounds:
             if "token_usage" in rounds_data[r]:

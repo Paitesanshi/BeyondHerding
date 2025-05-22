@@ -34,8 +34,6 @@ def Government_Policy_Efficiency(data: Dict[str, Any]) -> Dict[str, float]:
     try:
         # Access the efficiency_metrics list from the Government agent
         efficiency_metrics = safe_list(safe_get(data, 'efficiency_metrics', []))
-        print('!' * 50)
-        print(efficiency_metrics)
 
         # Calculate the average efficiency, handling empty lists and None values
         average_efficiency = safe_avg(efficiency_metrics)
@@ -76,8 +74,6 @@ def Citizen_Policy_Acceptance(data: Dict[str, Any]) -> Dict[str, float]:
 
         # Access the 'acceptance_level' variable from the Citizens agent
         acceptance_levels = safe_list(safe_get(data, 'satisfaction_level', []))
-        print('-' * 50)
-        print(acceptance_levels)
 
         # Calculate the average acceptance level, excluding None values
         average_acceptance = safe_avg(acceptance_levels, default=0)

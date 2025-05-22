@@ -40,8 +40,6 @@ from onesim.simulator.sim_env import SimulationState
 SIMULATION_REGISTRY = {}
 # 聊天记录单独保存，避免数据结构复杂化
 AGENT_CHAT_HISTORY = {}
-# 任务引用集合
-SIMULATION_TASKS = {}
 
 router = APIRouter(
     tags=["simulation"],
@@ -63,7 +61,7 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
         初始化状态的字典
     """
     # 检查环境是否存在
-    scenes_root = os.path.join(os.getcwd(), "envs")
+    scenes_root = os.path.join(os.getcwd(),"src", "envs")
     env_path = os.path.join(scenes_root, env_name)
     
     if not os.path.exists(env_path):
@@ -171,7 +169,8 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
         events = parse_json(events_path)
         
         # 创建工作流图并获取起始/结束节点
-        work_graph = WorkGraph(actions, events)
+        work_graph = WorkGraph()
+        work_graph.load_workflow_data(actions, events)
         start_agent_types = work_graph.get_start_agent_types()
         end_agent_types = work_graph.get_end_agent_types()
         
@@ -240,7 +239,7 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
                     # 创建新场景
                     scenario_id = await scenario_mgr.create_scenario(
                         name=env_name,
-                        folder_path=f"envs/{env_name}",
+                        folder_path=f"src/envs/{env_name}",
                         description=env_config.get('description', f"Simulation scenario for {env_name}"),
                         tags={
                             "domain": env_config.get('domain', ''), 
@@ -419,7 +418,7 @@ async def start_simulation(data: StartSimulationRequest):
             # 重置事件总线
             reset_event_bus()
             logger.info(f"已重置全局事件总线")
-            
+            AGENT_CHAT_HISTORY.clear()
             # 获取模型名称
             model_name = None
             if "config" in registry and "model" in registry["config"]:
@@ -712,6 +711,8 @@ async def stop_simulation(data: StopSimulationRequest):
         if event_bus:
             reset_event_bus()
         
+        component_registry = get_component_registry()
+        component_registry.clear()
         # 清理资源引用
         logger.info(f"清理环境 '{env_name}' 的资源引用")
         if "termination_event" in registry:
@@ -1035,10 +1036,11 @@ async def get_simulation_registry(env_name: str = ""):
 async def websocket_endpoint(websocket: WebSocket, env_name: str):
     """WebSocket连接端点，包含超时处理"""
     # 连接超时设置（秒）
-    DISCONNECT_TIMEOUT = 5  # 5分钟断开连接后结束模拟
-    EVENT_TIMEOUT = 60  # 5分钟没有新事件则结束模拟
+    DISCONNECT_TIMEOUT = 120  # 5分钟断开连接后结束模拟
+    EVENT_TIMEOUT = 120  # 5分钟没有新事件则结束模拟
     
     await connection_manager.connect(websocket, env_name)
+    logger.info(f"WebSocket connected: {env_name}")
     last_event_time = time.time()
     
     try:

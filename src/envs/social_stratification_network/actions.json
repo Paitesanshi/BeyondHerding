@@ -1,131 +1,7 @@
 {
-    "Individual": [
-        {
-            "id": 1,
-            "name": "identify_exchange_partners",
-            "condition": null,
-            "description": "The action of identifying potential partners for resource exchange within the individual's social network.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "social_network",
-                    "type": "list",
-                    "context": "agent",
-                    "description": "List of individuals within the social network of the agent."
-                },
-                {
-                    "name": "trust_threshold",
-                    "type": "float",
-                    "context": "agent",
-                    "description": "Minimum trust level required to consider an individual as a potential exchange partner."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "exchange_partners",
-                    "type": "list",
-                    "context": "agent",
-                    "description": "List of identified potential exchange partners."
-                }
-            ]
-        },
-        {
-            "id": 2,
-            "name": "evaluate_exchange_value",
-            "condition": "Potential partner and exchange value data available",
-            "description": "The process of evaluating the potential value and risks of an exchange with a selected partner.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "exchange_partners",
-                    "type": "list",
-                    "context": "agent",
-                    "description": "List of identified potential exchange partners."
-                },
-                {
-                    "name": "trust_level",
-                    "type": "float",
-                    "context": "event",
-                    "description": "Trust level between the individual and the partner."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "exchange_value",
-                    "type": "float",
-                    "context": "agent",
-                    "description": "Calculated value of the exchange."
-                },
-                {
-                    "name": "risk_assessment",
-                    "type": "float",
-                    "context": "agent",
-                    "description": "Assessment of risks associated with the exchange."
-                }
-            ]
-        },
-        {
-            "id": 3,
-            "name": "execute_exchange",
-            "condition": "Exchange evaluation meets trust threshold",
-            "description": "The execution of the resource exchange between the individual and the partner.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "exchange_value",
-                    "type": "float",
-                    "context": "agent",
-                    "description": "Calculated value of the exchange."
-                },
-                {
-                    "name": "risk_assessment",
-                    "type": "float",
-                    "context": "agent",
-                    "description": "Assessment of risks associated with the exchange."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "exchange_history",
-                    "type": "list",
-                    "context": "agent",
-                    "description": "Updated history of exchanges made by the individual."
-                },
-                {
-                    "name": "resources_exchanged",
-                    "type": "dict",
-                    "context": "agent",
-                    "description": "Details of resources exchanged between individuals."
-                }
-            ]
-        },
-        {
-            "id": 4,
-            "name": "update_social_capital",
-            "condition": null,
-            "description": "Updating the individual's social capital based on the outcome of the exchange.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "resources_exchanged",
-                    "type": "dict",
-                    "context": "agent",
-                    "description": "Details of resources exchanged between individuals."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "social_capital",
-                    "type": "float",
-                    "context": "agent",
-                    "description": "Updated social capital of the individual."
-                }
-            ]
-        }
-    ],
     "Family": [
         {
-            "id": 5,
+            "id": 1,
             "name": "decide_education_investment",
             "condition": null,
             "description": "The decision-making process regarding the allocation of resources for educational investments.",
@@ -154,7 +30,7 @@
             ]
         },
         {
-            "id": 6,
+            "id": 2,
             "name": "receive_admission_decision",
             "condition": "Admission decision received from educational institutions",
             "description": "The process of receiving and processing admission decisions from educational institutions.",
@@ -177,7 +53,7 @@
             ]
         },
         {
-            "id": 7,
+            "id": 3,
             "name": "allocate_education_resources",
             "condition": null,
             "description": "Allocating resources based on the received admission decisions.",
@@ -202,7 +78,7 @@
     ],
     "EducationalInstitution": [
         {
-            "id": 8,
+            "id": 4,
             "name": "select_students",
             "condition": "Applications received from families",
             "description": "Selecting students for admission based on predefined criteria.",
@@ -231,7 +107,7 @@
             ]
         },
         {
-            "id": 9,
+            "id": 5,
             "name": "receive_application",
             "condition": null,
             "description": "The process of receiving applications from families for student admission.",
@@ -250,60 +126,6 @@
                     "type": "list",
                     "context": "agent",
                     "description": "Updated list of applications received by the institution."
-                }
-            ]
-        }
-    ],
-    "Employer": [
-        {
-            "id": 10,
-            "name": "evaluate_candidates",
-            "condition": "Candidate applications received",
-            "description": "Evaluating candidates for potential hiring based on skill and cultural fit.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "candidates_list",
-                    "type": "list",
-                    "context": "agent",
-                    "description": "List of candidates to be evaluated."
-                },
-                {
-                    "name": "evaluation_criteria",
-                    "type": "dict",
-                    "context": "agent",
-                    "description": "Criteria used to evaluate candidates."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "evaluation_results",
-                    "type": "dict",
-                    "context": "agent",
-                    "description": "Results of the candidate evaluations."
-                }
-            ]
-        },
-        {
-            "id": 11,
-            "name": "make_hiring_decision",
-            "condition": "Candidate evaluations completed",
-            "description": "Making a hiring decision based on the evaluation results.",
-            "type": "OR",
-            "required_variables": [
-                {
-                    "name": "evaluation_results",
-                    "type": "dict",
-                    "context": "agent",
-                    "description": "Results of the candidate evaluations."
-                }
-            ],
-            "output_updates": [
-                {
-                    "name": "hiring_decision",
-                    "type": "str",
-                    "context": "agent",
-                    "description": "Final decision regarding the hiring of a candidate."
                 }
             ]
         }

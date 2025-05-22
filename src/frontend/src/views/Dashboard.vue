@@ -139,7 +139,11 @@ export default {
     /**获取模型列表 */
     fetchModels() {
       axios
-        .get("/api/models")
+        .get("/api/config/models",{
+          params: {
+            category: "chat"
+          }
+        })
         .then((response) => {
           for (let i in response.data.models) {
             for (let j in response.data.models[i]) {

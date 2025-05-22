@@ -162,9 +162,6 @@ class CustomerAgent(GeneralAgent):
         else:
             satisfaction_score = event.satisfaction_score
         
-        # print('-' * 50)
-        # print(type(satisfaction_score))
-        # print(satisfaction_score)
 
         # Retrieve the current loyalty score of the agent
         current_loyalty = self.profile.get_data("loyalty", 0.0)

@@ -281,19 +281,11 @@ class AuctionPlatform(GeneralAgent):
         if bid_received:
             buyer_id = self.profile.get_data("buyer_id", "")
             bid_amount = self.profile.get_data("bid_amount", 0.0)
-            # print('-' * 50)
-            # print("buyer")
-            # print(type(event))
-            # print(buyer_id)
-            # print(bid_amount)
+
         if reserve_price_set:
             seller_id = self.profile.get_data("seller_id", "")
             reserve_price = self.profile.get_data("reserve_price", 0.0)
-            # print('-' * 50)
-            # print("seller")
-            # print(type(event))
-            # print(seller_id)
-            # print(reserve_price)
+
             
         events = []
         for target_id in target_ids:
@@ -362,8 +354,6 @@ class AuctionPlatform(GeneralAgent):
 
     async def finalize_auction(self, event: Event) -> List[Event]:
         
-        print('-' * 50)
-        print(event.__class__.__name__)
 
         auction_id = event.get("auction_id", "")
         seller_id = event.get("seller_id", "")
@@ -379,10 +369,6 @@ class AuctionPlatform(GeneralAgent):
         if buyer_id != "":
             bid_amount = await self.get_agent_data(buyer_id, "bid_amount", 0.0)
 
-        # print("-" * 50)
-        # print(seller_id)
-        # print(buyer_id)
-        # print(speculator_id)
 
         if seller_id != "" and buyer_id != "":
             observation = f"Auction ID: {auction_id} Seller ID: {seller_id} Seller's Reserve Price: {reserve_price} Buyer ID: {buyer_id} Buyer's Bid Amount: {bid_amount}"
@@ -408,9 +394,6 @@ class AuctionPlatform(GeneralAgent):
 
             self.profile.update_data("auction_outcome", auction_outcome)
 
-            print("?" * 50)
-            print(seller_id)
-            print(buyer_id)
 
             await self.update_agent_data(seller_id, "reserve_price", final_price)
 
@@ -443,9 +426,6 @@ class AuctionPlatform(GeneralAgent):
                 target_ids = [target_ids]
 
             self.profile.update_data("auction_outcome", auction_outcome)
-
-            # print("?" * 50)
-            # print(seller_id)
             await self.update_agent_data(seller_id, "reserve_price", final_price)
             self.profile.update_data("seller_id", "")
             self.profile.update_data("reserve_price", 0.0)
@@ -462,8 +442,7 @@ class AuctionPlatform(GeneralAgent):
                 completion_status="completed"
             )
             events.append(auction_outcome_event)
-        # print('-!' * 50)
-        # print("end finalize")
+
         
 
         return events

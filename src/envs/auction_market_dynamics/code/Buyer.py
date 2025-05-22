@@ -53,8 +53,6 @@ class Buyer(GeneralAgent):
         # Parse the LLM's response
         bidding_decision = result.get('bidding_decision', False)
 
-        # print('?' * 50)
-        # print(bidding_decision)
         
         bid_amount = result.get('bid_amount', None)
         target_ids = result.get('target_ids', None)

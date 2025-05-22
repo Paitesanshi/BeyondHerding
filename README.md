@@ -88,22 +88,109 @@ Access the web interface (frontend) at `http://localhost:5173` and the API docum
 
 
 <p align="center">
-  <img src="assets/simulation.png" width="800"/>
+  <img src="assets/simulation.gif" width="800"/>
 </p>
 
 ## ⚙️ Configuration
 
 YuLan-OneSim uses JSON configuration files to control simulation behavior and model settings.
 
+### Simulation Configuration (`config/config.json`)
 
-#### Simulation Configuration (`config/config.json`)
+The simulation configuration file controls general simulation parameters:
 
-Controls general simulation settings including environment, agents, database, and distribution parameters.
+```json
+{
+  "simulator": {
+    "environment": {
+      "name": "labor_market_matching_process",  // Environment scenario to simulate
+      "mode": "round",                          // Simulation execution mode
+      "max_steps": 3,                           // Maximum simulation steps
+      "interval": 60.0,                         // Interval between simulation steps
+      "export_training_data": false,            // Whether to export training data
+      "export_event_data": false                // Whether to export event data
+    }
+  },
+  "agent": {
+    "planning": "COTPlanning",                  // Agent planning algorithm
+    "memory": {
+      "strategy": "ShortLongStrategy",          // Memory management strategy
+      "storages": {
+        "short_term_storage": {
+          "class": "ListMemoryStorage",         // Short-term memory storage type
+          "capacity": 100                       // Maximum memory capacity
+        },
+        "long_term_storage": {
+          "class": "VectorMemoryStorage",       // Long-term memory storage type
+          "capacity": 100,
+          "model_config_name": "openai_embedding-bert"  // Embedding model for memory
+        }
+      },
+      "metric_weights": {
+        "recency": 0.7                          // Weight for recency in memory retrieval
+      }
+    }
+  },
+  "database": {
+    "enabled": false,                           // Enable/disable database
+    "host": "localhost",                        // Database host
+    "port": 5432,                               // Database port
+    "dbname": "onesim"                          // Database name
+  },
+  "distribution": {
+    "enabled": false,                            // Enable/disable distributed mode
+    "mode": "single",                           // Running mode: single/distributed
+    "node_id": "1"                              // Node identifier for distributed mode
+  },
+  "monitor": {
+    "enabled": true,                            // Enable/disable monitoring
+    "update_interval": 30                       // Monitor update interval
+  }
+}
+```
 
-#### Model Configuration (`config/model_config.json`)
+### Model Configuration (`config/model_config.json`)
 
-Specifies the LLMs and embedding models used by the simulator, including provider details and generation parameters.
+Specifies the LLMs and embedding models used by the simulator:
 
+```json
+{
+  "chat": [
+    {
+      "provider": "openai",                     // LLM provider: OpenAI
+      "config_name": "openai-gpt4o",            // Configuration identifier
+      "model_name": "gpt-4o",                   // Model name
+      "api_key": "sk-xxx",                      // API key
+      "generate_args": {
+        "temperature": 0                        // Temperature setting (0 = deterministic)
+      }
+    },
+    {
+      "provider": "vllm",                       // LLM provider: vLLM for local deployment
+      "config_name": "vllm-qwen",               // Configuration identifier
+      "model_name": "Qwen2.5-14B-Instruct",     // Model name or path
+      "client_args": {
+        "base_url": "http://localhost:9889/v1/" // Local API endpoint
+      },
+      "generate_args": {
+        "temperature": 0                        // Temperature setting
+      }
+    }
+  ],
+  "embedding": [
+    {
+      "model_type": "openai_embedding",         // Embedding model type
+      "config_name": "openai_embedding-bert",   // Configuration identifier
+      "model_name": "bge-base-en-v1.5",         // Embedding model name or path
+      "client_args": {
+        "base_url": "http://localhost:9890/v1/" // Local API endpoint
+      }
+    }
+  ]
+}
+```
+
+YuLan-OneSim supports both cloud-based APIs (like OpenAI) and locally deployed models through vLLM, giving users flexibility in their model choices. 
 
 ## 📁 Project Structure
 
@@ -119,16 +206,6 @@ Specifies the LLMs and embedding models used by the simulator, including provide
 └── scripts/       # Utility scripts
 ```
 
-## 📊 Examples
-
-#### Labor Market Simulation
-
-```bash
-yulan-onesim-cli --config config/config.json --model_config config/model_config.json --mode single --env labor_market_matching_process
-```
-
-This simulation models job matching dynamics between employers and job seekers, analyzing equilibrium wage patterns and matching efficiency.
-
 
 ## 🧪 Experiments
 
@@ -138,7 +215,7 @@ This simulation models job matching dynamics between employers and job seekers, 
   <img src="assets/ex-automatic.png" width="750"/>
 </p>
 
-We conducted a comprehensive evaluation of YuLan-OneSim’s capabilities in automatic scenario generation. In terms of efficiency, the simulator achieves an average generation speed of 358 tokens per second. In terms of effectiveness, the quality scores for the generated agent behavior graphs and code both exceed 4 points (based on the scoring criteria described in the paper), demonstrating the system’s strong potential in automatic scenario construction.
+We conducted a comprehensive evaluation of YuLan-OneSim's capabilities in automatic scenario generation. In terms of efficiency, the simulator achieves an average generation speed of 358 tokens per second. In terms of effectiveness, the quality scores for the generated agent behavior graphs and code both exceed 4 points (based on the scoring criteria described in the paper), demonstrating the system's strong potential in automatic scenario construction.
 
 <p align="center">
   <img src="assets/ex-automatic-1.png" width="750"/>
@@ -154,16 +231,16 @@ To evaluate credibility, we conduct experiments from two perspectives: (1) Socia
   <img src="assets/2.png" width="750"/>
 </p>
 
-In Experiment (1), we conduct simulations based on the Axelrod cultural dissemination model. As the simulation progresses, distinct cultural boundaries gradually emerge. Within each cultural region, neighboring agents exhibit high similarity (indicated by darker connection colors), while the boundaries between regions become increasingly clear. This visualization effectively reflects the core insight of Axelrod’s theory: local interactions foster cultural homogeneity within regions, while cultural diversity is preserved on a global scale.
+In Experiment (1), we conduct simulations based on the Axelrod cultural dissemination model. As the simulation progresses, distinct cultural boundaries gradually emerge. Within each cultural region, neighboring agents exhibit high similarity (indicated by darker connection colors), while the boundaries between regions become increasingly clear. This visualization effectively reflects the core insight of Axelrod's theory: local interactions foster cultural homogeneity within regions, while cultural diversity is preserved on a global scale.
 
 
 <p align="center">
   <img src="assets/2-1.png" width="750"/>
 </p>
 
-We also conducted a dynamic and quantitative analysis of the formation process underlying Axelrod’s theory. As shown in the figure above, during the initial phase, the local convergence within communities gradually increases, while global polarization continues to decline—indicating that agents begin interacting and forming early-stage cultural clusters. Around the 15th iteration, an inflection point emerges: local convergence continues to rise, while global polarization stabilizes. This trend suggests that regions are becoming increasingly homogeneous internally, while the boundaries between different cultural groups remain clearly distinguishable.
+We also conducted a dynamic and quantitative analysis of the formation process underlying Axelrod's theory. As shown in the figure above, during the initial phase, the local convergence within communities gradually increases, while global polarization continues to decline—indicating that agents begin interacting and forming early-stage cultural clusters. Around the 15th iteration, an inflection point emerges: local convergence continues to rise, while global polarization stabilizes. This trend suggests that regions are becoming increasingly homogeneous internally, while the boundaries between different cultural groups remain clearly distinguishable.
 
-These experimental results clearly illustrate the core of Axelrod’s theory—the coexistence of local convergence and global polarization. YuLan-OneSim not only successfully reproduces this theoretical expectation but also provides a quantitative characterization of the process, offering deeper insights into the temporal dynamics of cultural dissemination.
+These experimental results clearly illustrate the core of Axelrod's theory—the coexistence of local convergence and global polarization. YuLan-OneSim not only successfully reproduces this theoretical expectation but also provides a quantitative characterization of the process, offering deeper insights into the temporal dynamics of cultural dissemination.
 
 <p align="center">
   <img src="assets/2-2.png" width="750"/>
@@ -188,9 +265,9 @@ Despite this deviation, the overall results demonstrate that YuLan-OneSim can ap
 
 In the evaluation of the AI Social Researcher, we focus primarily on the quality of the generated simulation scenario (ODD protocol) and the final analytical report. The results show that the AI Social Researcher performs well across all evaluation criteria for scenario design, achieving an average overall score of 4.13 out of 5. Notably, it excels in the "Feasibility" dimension, with an average score of 4.88, indicating its strong ability to translate abstract research questions into executable simulation plans. It also performs well in "Relevance" (average score of 4.25), ensuring that the generated scenarios are closely aligned with the user-defined research topics.
 
-In terms of report generation, the AI Social Researcher demonstrates solid performance in "Structural Organization" (average score of 4.00) and "Content Completeness and Accuracy" (average score of 3.63), showing that it can effectively structure analysis results into logically coherent and well-supported technical reports. The top-performing reports include “Auction Market Dynamics” (Economics) and “Court Trial Simulation” (Law), each receiving an overall score of 4.0.
+In terms of report generation, the AI Social Researcher demonstrates solid performance in "Structural Organization" (average score of 4.00) and "Content Completeness and Accuracy" (average score of 3.63), showing that it can effectively structure analysis results into logically coherent and well-supported technical reports. The top-performing reports include "Auction Market Dynamics" (Economics) and "Court Trial Simulation" (Law), each receiving an overall score of 4.0.
 
-However, there remains room for improvement, particularly in the dimensions of "Insightfulness" (3.25) and "Practicality" (3.00). While the AI Social Researcher is competent in data analysis and reporting, it still struggles to extract deeper research insights and formulate actionable recommendations from simulation results. For instance, in the scenario “Labor Market Matching Process,” the report received a low practicality score of 2.0, highlighting the current limitations of the model in certain domain-specific applications.
+However, there remains room for improvement, particularly in the dimensions of "Insightfulness" (3.25) and "Practicality" (3.00). While the AI Social Researcher is competent in data analysis and reporting, it still struggles to extract deeper research insights and formulate actionable recommendations from simulation results. For instance, in the scenario "Labor Market Matching Process," the report received a low practicality score of 2.0, highlighting the current limitations of the model in certain domain-specific applications.
 
 
 

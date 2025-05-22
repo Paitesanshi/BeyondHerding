@@ -24,18 +24,25 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 class WorkGraph(metaclass=SingletonMeta):
-    def __init__(self, actions: Dict[str, List[Dict[str, Any]]], events: Dict[str, Dict[str, Any]]):
+    def __init__(self):
         """
-        Initialize WorkGraph, adding nodes and edges.
-
-        :param actions: Dictionary containing lists of actions for each agent type
-        :param events: Dictionary containing events
+        Initialize WorkGraph.
         """
         self.graph = nx.DiGraph()
-        self.actions = actions
-        self.events = events
+        self.actions: Dict[str, List[Dict[str, Any]]] = {}
+        self.events: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()  # Add thread lock
-        self._build_graph()
+
+    def load_workflow_data(self, actions: Dict[str, List[Dict[str, Any]]], events: Dict[str, Dict[str, Any]]):
+        """
+        Load new actions and events into the WorkGraph.
+        Clears the existing graph and rebuilds it with the new data.
+        """
+        with self._lock:
+            self.graph.clear()  # Clear all nodes and edges from the graph
+            self.actions = actions
+            self.events = events
+            self._build_graph() # Rebuild with new actions and events
 
     def _ensure_unique_event_names(self):
         """
@@ -50,70 +57,68 @@ class WorkGraph(metaclass=SingletonMeta):
 
     def _build_graph(self):
         """Build the graph by adding nodes and edges."""
-        with self._lock:
-            # Add actions as nodes, node IDs formatted as {agent_type}.{action_name}
-            for agent_type, actions_list in self.actions.items():
-                for action in actions_list:
-                    node_id = f"{agent_type}.{action['name']}"
-                    if self.graph.has_node(node_id):
-                        raise ValueError(f"Duplicate node: {node_id}")
-                    self.graph.add_node(node_id, 
-                                        type='action', 
-                                        agent_type=agent_type,
-                                        name=action['name'],
-                                        description=action['description'],
-                                        action_type=action['type'],
-                                        required_variables=action.get('required_variables', []),
-                                        output_updates=action.get('output_updates', []))
-                    #logger.info(f"Action node added: {node_id}")
-
-            # Add special EnvAgent action nodes if necessary
-            env_start_node_id = "EnvAgent.start"
-            if env_start_node_id not in self.graph:
-                self.graph.add_node(env_start_node_id, 
+        # Add actions as nodes, node IDs formatted as {agent_type}.{action_name}
+        for agent_type, actions_list in self.actions.items():
+            for action in actions_list:
+                node_id = f"{agent_type}.{action['name']}"
+                if self.graph.has_node(node_id):
+                    raise ValueError(f"Duplicate node: {node_id}")
+                self.graph.add_node(node_id, 
                                     type='action', 
-                                    agent_type='EnvAgent',
-                                    name='start',
-                                    description='Environment start action',
-                                    action_type='OR',
-                                    required_variables=[],
-                                    output_updates=[])
-                #logger.info(f"EnvAgent start node added: {env_start_node_id}")
+                                    agent_type=agent_type,
+                                    name=action['name'],
+                                    description=action['description'],
+                                    action_type=action['type'],
+                                    required_variables=action.get('required_variables', []),
+                                    output_updates=action.get('output_updates', []))
+                #logger.info(f"Action node added: {node_id}")
 
-            env_end_node_id = "EnvAgent.terminate"
-            if env_end_node_id not in self.graph:
-                self.graph.add_node(env_end_node_id, 
-                                    type='action', 
-                                    agent_type='EnvAgent',
-                                    name='terminate',
-                                    description='Environment end action',
-                                    action_type='OR',
-                                    required_variables=[],
-                                    output_updates=[])
-                #logger.info(f"EnvAgent start node added: {env_start_node_id}")
+        # Add special EnvAgent action nodes if necessary
+        env_start_node_id = "EnvAgent.start"
+        if env_start_node_id not in self.graph:
+            self.graph.add_node(env_start_node_id, 
+                                type='action', 
+                                agent_type='EnvAgent',
+                                name='start',
+                                description='Environment start action',
+                                action_type='OR',
+                                required_variables=[],
+                                output_updates=[])
+            #logger.info(f"EnvAgent start node added: {env_start_node_id}")
 
-            # Add events as edges, labeled with a unique event_name
-            for event_id, event in self.events.items():
-                from_agent_type = event['from_agent_type']
-                to_agent_type = event['to_agent_type']
-                from_action = event['from_action_name']
-                to_action = event['to_action_name']
-                event_name = event['event_name']
+        env_end_node_id = "EnvAgent.terminate"
+        if env_end_node_id not in self.graph:
+            self.graph.add_node(env_end_node_id, 
+                                type='action', 
+                                agent_type='EnvAgent',
+                                name='terminate',
+                                description='Environment end action',
+                                action_type='OR',
+                                required_variables=[],
+                                output_updates=[])
+            #logger.info(f"EnvAgent start node added: {env_start_node_id}")
 
-                from_node_id = f"{from_agent_type}.{from_action}"
-                to_node_id = f"{to_agent_type}.{to_action}"
+        # Add events as edges, labeled with a unique event_name
+        for event_id, event in self.events.items():
+            from_agent_type = event['from_agent_type']
+            to_agent_type = event['to_agent_type']
+            from_action = event['from_action_name']
+            to_action = event['to_action_name']
+            event_name = event['event_name']
 
-                if not self.graph.has_node(from_node_id):
-                    raise ValueError(f"Source node does not exist: {from_node_id}")
-                if not self.graph.has_node(to_node_id):
-                    raise ValueError(f"Target node does not exist: {to_node_id}")
+            from_node_id = f"{from_agent_type}.{from_action}"
+            to_node_id = f"{to_agent_type}.{to_action}"
 
-                self.graph.add_edge(from_node_id, to_node_id, 
-                                    type='event',
-                                    event_name=event_name,
-                                    event_info=event.get('event_info', ''),
-                                    fields=event.get('fields', []))
-                #logger.info(f"Event edge added: {event_name} from {from_node_id} to {to_node_id}")
+            if not self.graph.has_node(from_node_id):
+                raise ValueError(f"Source node does not exist: {from_node_id}")
+            if not self.graph.has_node(to_node_id):
+                raise ValueError(f"Target node does not exist: {to_node_id}")
+
+            self.graph.add_edge(from_node_id, to_node_id, 
+                                type='event',
+                                event_name=event_name,
+                                event_info=event.get('event_info', ''),
+                                fields=event.get('fields', []))
 
     # ===================== Node Operations =====================
 

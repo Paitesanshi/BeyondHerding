@@ -84,8 +84,6 @@ def Average_Strategy_Adjustments(data: Dict[str, Any]) -> Dict[str, float]:
 
         # Access the 'strategy_changes' variable from TaskExecutor agents
         strategy_changes_list = safe_list(safe_get(data, 'strategy_changes', []))
-        # print('-' * 50)
-        # print(strategy_changes_list)
 
         # Filter out None values and ensure they are numeric
         valid_strategy_changes = [change for change in strategy_changes_list if change != 'none' and change != 'no_changes']

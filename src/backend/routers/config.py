@@ -12,7 +12,7 @@ import onesim
 from onesim.config import get_component_registry
 from backend.models.config import ConfigOptions, ProfileCountRequest, ProfileCountResponse, SaveConfigRequest, SaveConfigResponse
 from backend.models.simulation import AgentInfo
-
+from backend.utils.model_management import load_model_if_needed, get_available_models
 
 router = APIRouter(
     prefix="/config",
@@ -67,7 +67,7 @@ def get_config_options(env_name: str):
     
     # 检查场景是否存在
     base_path = os.path.abspath(os.getcwd())
-    scenes_root = os.path.join(base_path, "envs")
+    scenes_root = os.path.join(base_path,"src", "envs")
     scene_path = os.path.join(scenes_root, env_name)
     
     if not os.path.exists(scene_path):
@@ -166,7 +166,7 @@ def get_config_options(env_name: str):
         "name": env_name,  # 固定，不可更改
         "mode": "round",  # 默认模式
         "modes": ["round", "tick"],  # 可用模式
-        "max_rounds": 3  # 默认最大回合数
+        "max_steps": 3  # 默认最大回合数
     }
     
     # 创建代理选项
@@ -181,8 +181,6 @@ def get_config_options(env_name: str):
         "chat": [],
         "embedding": []
     }
-    chat_model_names = set()
-    embedding_model_names = set()
     if os.path.exists(MODEL_CONFIG_PATH):
         try:
             with open(MODEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -194,7 +192,7 @@ def get_config_options(env_name: str):
             
             # 提取嵌入模型选项
             if "embedding" in model_config:
-                model_options["embedding"] = [model.get("model_name", "") for model in model_config["embedding"]]
+                model_options["embedding"] = list({model.get("model_name", "") for model in model_config["embedding"]})
         except Exception as e:
             logger.error(f"加载model_config.json出错: {e}")
     
@@ -217,7 +215,7 @@ async def save_config(data: SaveConfigRequest):
     user_config = data.config
     
     # 检查场景是否存在
-    scenes_root = os.path.join(os.getcwd(), "envs")
+    scenes_root = os.path.join(os.getcwd(),"src", "envs")
     scene_path = os.path.join(scenes_root, env_name)
     
     if not os.path.exists(scene_path):
@@ -304,312 +302,6 @@ async def save_config(data: SaveConfigRequest):
         logger.error(f"保存配置出错: {e}")
         raise HTTPException(status_code=500, detail=f"保存配置失败: {str(e)}")
 
-# async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
-#     """
-#     初始化模拟环境和相关组件。
-#     参考main.py和onesim.__init__.py的初始化流程，整合到config模块中。
-    
-#     Args:
-#         env_name: 环境名称
-#         model_name: 可选的模型名称，如果未提供则从配置获取
-        
-#     Returns:
-#         初始化状态的字典
-#     """
-#     # 检查环境是否存在
-#     scenes_root = os.path.join(os.getcwd(), "envs")
-#     env_path = os.path.join(scenes_root, env_name)
-    
-#     if not os.path.exists(env_path):
-#         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
-    
-#     try:
-#         # 获取配置 - 使用内存中的配置或默认配置
-#         if env_name in USER_CONFIGS:
-#             logger.info(f"使用内存中的环境配置: {env_name}")
-#             config_data = USER_CONFIGS[env_name]
-#         else:
-#             logger.info(f"使用默认环境配置: {env_name}")
-#             config_data = DEFAULT_CONFIG
-        
-#         # 确保配置包含必要的环境信息
-#         config_data['env_name'] = env_name
-#         config_data['env_path'] = env_path
-        
-#         # 如果未提供模型名称，尝试从配置获取
-#         if not model_name and "model" in config_data:
-#             if "chat" in config_data["model"]:
-#                 model_name = config_data["model"]["chat"]
-#                 logger.info(f"从配置获取模型: {model_name}")
-        
-#         # 确保基础组件已初始化
-#         components_to_init = ["model"]
-        
-#         # 添加其他可能需要的组件
-#         if config_data.get("monitor", {}).get("enabled", False):
-#             components_to_init.append("monitor")
-        
-#         if config_data.get("database", {}).get("enabled", False):
-#             components_to_init.append("database")
-            
-#         if config_data.get("distribution", {}).get("enabled", False):
-#             components_to_init.append("distribution")
-            
-#         # 初始化必要的OneSim组件
-#         from onesim import init, COMPONENT_MODEL, COMPONENT_MONITOR, COMPONENT_DATABASE, COMPONENT_DISTRIBUTION
-        
-#         # 转换组件名称为常量
-#         component_map = {
-#             "model": COMPONENT_MODEL,
-#             "monitor": COMPONENT_MONITOR,
-#             "database": COMPONENT_DATABASE,
-#             "distribution": COMPONENT_DISTRIBUTION
-#         }
-        
-#         # 准备初始化配置
-#         init_components = [component_map[c] for c in components_to_init if c in component_map]
-        
-#         # 如果有模型名称，在模型配置字典中添加
-       
-        
-#         # 初始化组件并获取配置
-#         config = await onesim.init(
-#             components=init_components,
-#             config_dict=config_data,  # 直接传入配置字典
-#             model_config_path=MODEL_CONFIG_PATH,
-#             #model_config_dict=model_config_dict
-#         )
-        
-        
-#         # 加载模型
-#         model_config_name = await load_model_for_simulation(model_name)
-        
-#         # 加载SimEnv类定义
-#         import sys
-#         import importlib.util
-        
-#         if scenes_root not in sys.path:
-#             sys.path.append(scenes_root)
-            
-#         module_name = f"{env_name}.code.SimEnv"
-#         try:
-#             sim_env_module = importlib.import_module(module_name)
-#             if not hasattr(sim_env_module, "SimEnv"):
-#                 raise AttributeError(f"模块 {module_name} 不包含名为 'SimEnv' 的类")
-            
-#             SimEnv = getattr(sim_env_module, "SimEnv")
-#             logger.info(f"已加载环境类: {SimEnv.__name__}")
-#         except Exception as e:
-#             logger.error(f"加载环境类错误: {e}")
-#             raise Exception(f"无法加载环境类: {str(e)}")
-        
-#         # 初始化代理
-#         from onesim.simulator import AgentFactory
-#         from onesim.utils.work_graph import WorkGraph
-#         from onesim.events import get_event_bus
-        
-#         # 创建代理工厂
-#         agent_factory = AgentFactory(
-#             simulator_config=config.simulator_config,
-#             model_config_name=model_config_name,
-#             env_path=env_path,
-#             agent_config=config.agent_config
-#         )
-        
-#         # 创建代理
-#         logger.info("创建代理实例")
-#         agents = await agent_factory.create_agents()
-        
-#         # 构建工作流图
-#         logger.info("构建工作流图")
-#         actions_path = os.path.join(env_path, "actions.json")
-#         events_path = os.path.join(env_path, "events.json")
-        
-#         # 解析操作和事件定义
-#         from onesim.config import parse_json
-#         actions = parse_json(actions_path)
-#         events = parse_json(events_path)
-        
-#         # 创建工作流图并获取起始/结束节点
-#         work_graph = WorkGraph(actions, events)
-#         start_agent_types = work_graph.get_start_agent_types()
-#         end_agent_types = work_graph.get_end_agent_types()
-        
-#         start_agent_ids = agent_factory.get_agent_profile_ids(start_agent_types)
-#         end_agent_ids = agent_factory.get_agent_profile_ids(end_agent_types)
-        
-#         # 添加环境关系
-#         for agent_type, ids in end_agent_ids.items():
-#             for agent_id in ids:
-#                 agent_factory.add_env_relationship(agent_id)
-        
-#         # 获取事件总线
-#         event_bus = get_event_bus()
-        
-#         # 为分布式场景做检查
-#         is_distributed = False
-#         registry = get_component_registry()
-#         if registry.is_initialized(COMPONENT_DISTRIBUTION):
-#             node = registry.get_instance(COMPONENT_DISTRIBUTION)
-#             is_distributed = True
-#             logger.info(f"检测到分布式模式: {node.role}")
-        
-#         # 初始化数据跟踪ID（如果启用数据库）
-#         trail_id = None
-#         if registry.is_initialized(COMPONENT_DATABASE):
-#             try:
-#                 from onesim.data import ScenarioManager, TrailManager
-#                 import time
-#                 import uuid
-                
-#                 # 创建或获取情景ID
-#                 scenario_mgr = ScenarioManager()
-#                 env_config = config.simulator_config.environment
-                
-#                 # 尝试找到现有场景
-#                 scenarios = await scenario_mgr.get_scenario_by_name(name=env_name, exact_match=True)
-#                 scenario_id = None
-                
-#                 if scenarios and len(scenarios) > 0:
-#                     for scenario in scenarios:
-#                         if scenario['name'] == env_name:
-#                             scenario_id = scenario['scenario_id']
-#                             logger.info(f"使用现有场景ID {scenario_id} for {env_name}")
-#                             break
-                
-#                 if scenario_id is None:
-#                     # 创建新场景
-#                     scenario_id = await scenario_mgr.create_scenario(
-#                         name=env_name,
-#                         folder_path=f"envs/{env_name}",
-#                         description=env_config.get('description', f"Simulation scenario for {env_name}"),
-#                         tags={
-#                             "domain": env_config.get('domain', ''), 
-#                             "version": env_config.get('version', '1.0')
-#                         }
-#                     )
-#                     logger.info(f"创建新场景ID {scenario_id} for {env_name}")
-                
-#                 # 创建trail
-#                 trail_mgr = TrailManager()
-#                 trail_name = f"{env_name}_run_{time.strftime('%Y%m%d_%H%M%S')}"
-#                 trail_id = await trail_mgr.create_trail(
-#                     scenario_id=scenario_id,
-#                     name=trail_name,
-#                     description=f"Simulation run for {env_name}",
-#                     config=config.simulator_config.to_dict()
-#                 )
-#                 logger.info(f"创建数据跟踪ID {trail_id} 用于数据存储")
-#             except Exception as e:
-#                 logger.error(f"初始化数据存储错误: {e}, 继续而不存储数据")
-        
-#         # 创建simulation_id
-#         import uuid
-#         simulation_id = str(uuid.uuid4())
-        
-#         # 存储这些对象以便simulation模块使用
-#         from app.routers.simulation import SIMULATION_REGISTRY
-        
-#         # 在全局注册表中存储代理工厂和代理 - 与simulation.py中的格式保持一致
-#         SIMULATION_REGISTRY[env_name] = {
-#             "agent_factory": agent_factory,
-#             "agents": agents,
-#             "initialized": True,
-#             "running": False,
-#             "config": config_data,
-#             "event_bus": event_bus,
-#             "work_graph": work_graph,
-#             "start_agent_ids": start_agent_ids,
-#             "end_agent_ids": end_agent_ids,
-#             "SimEnv": SimEnv,
-#             "env_path": env_path,
-#             "end_events": work_graph.get_end_events(),
-#             "simulation_id": simulation_id,
-#             "trail_id": trail_id,
-#             # 添加状态信息
-#             "status": "initialized",
-#             "metrics": {},
-#             "step": 0,
-#             "start_time": None,
-#             "pause_time": None,
-#             "events": []
-#         }
-        
-#         created_agents=[]
-#         for agent_type in agents:
-#             for agent_id, agent in agents[agent_type].items():
-#                 created_agents.append(AgentInfo(
-#                     id=agent_id,
-#                     type=agent_type,
-#                     profile=agent.get_profile(include_private=True)
-#                 ))
-#         # 返回初始化状态
-#         result = {
-#             "env_name": env_name,
-#             "config_applied": True,
-#             "agents": created_agents,
-#             "agent_count": sum(len(agents[agent_type]) for agent_type in agents),
-#             "is_distributed": is_distributed,
-#             "trail_id": trail_id,
-#             "components_initialized": {
-#                 component: registry.is_initialized(component_map[component])
-#                 for component in components_to_init if component in component_map
-#             },
-#             "workflow": {
-#                 "start_agent_types": start_agent_types,
-#                 "end_agent_types": end_agent_types,
-#                 "start_agent_ids": start_agent_ids,
-#                 "end_agent_ids": end_agent_ids,
-#                 "end_events": work_graph.get_end_events()
-#             },
-#             "ready_for_simulation": True
-#         }
-        
-#         logger.info(f"环境 '{env_name}' 初始化成功")
-#         return result
-        
-#     except Exception as e:
-#         logger.error(f"初始化模拟环境出错: {str(e)}")
-#         raise HTTPException(status_code=500, detail=f"初始化模拟环境失败: {str(e)}")
-
-# async def load_model_for_simulation(model_name: str = None) -> str:
-#     """
-#     加载模型并返回模型配置名称。这个函数抽离出来是为了使config.py和simulation.py可以共享相同的模型加载逻辑。
-    
-#     Args:
-#         model_name: 要加载的模型名称
-        
-#     Returns:
-#         model_config_name: 加载好的模型配置名称
-#     """
-#     from app.utils.model_management import load_model_if_needed
-    
-#     # 如果没有指定模型名称，使用负载均衡器
-#     if not model_name:
-#         return "chat_load_balancer"
-    
-#     # 尝试加载模型
-#     try:
-#         model = await load_model_if_needed(model_name=model_name, category="chat")
-#         model_config_name = model.config_name
-#         logger.info(f"为模拟加载模型: {model_config_name}")
-#         return model_config_name
-#     except Exception as e:
-#         logger.error(f"加载模型错误: {e}，使用默认配置")
-#         return "chat_load_balancer"
-
-
-# @router.post("/initialize_simulation")
-# async def initialize_simulation_endpoint(env_name: str, model_name: Optional[str] = None):
-#     """初始化模拟环境和相关组件的端点"""
-#     try:
-#         result = await initialize_simulation(env_name, model_name)
-#         return result
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         logger.error(f"初始化模拟出错: {str(e)}")
-#         raise HTTPException(status_code=500, detail=f"初始化模拟失败: {str(e)}")
 
 @router.get("/get", response_model=Dict[str, Any])
 def get_config(env_name: str):
@@ -619,7 +311,7 @@ def get_config(env_name: str):
         return USER_CONFIGS[env_name]
     
     # 如果不在内存中，尝试加载默认配置
-    scenes_root = os.path.join(os.getcwd(), "envs")
+    scenes_root = os.path.join(os.getcwd(), "src", "envs")
     scene_path = os.path.join(scenes_root, env_name)
     config_path = os.path.join(scene_path, "config", "simulator_config.json")
     
@@ -635,27 +327,26 @@ def get_config(env_name: str):
     return DEFAULT_CONFIG
 
 # 获取模型配置
-@router.get("/models", response_model=Dict[str, List[str]])
-def get_models():
-    """获取所有可用模型"""
-    model_options = {
-        "chat": [],
-        "embedding": []
-    }
+@router.get("/models", response_model=Dict[str, Any])
+async def get_models(category: Optional[str] = None):
+    """
+    获取可用模型列表（按类别筛选）
     
-    if os.path.exists(MODEL_CONFIG_PATH):
-        try:
-            with open(MODEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
-                model_config = json.load(f)
-                
-            # 提取聊天模型选项
-            if "chat" in model_config:
-                model_options["chat"] = [model.get("model_name", "") for model in model_config["chat"]]
-            
-            # 提取嵌入模型选项
-            if "embedding" in model_config:
-                model_options["embedding"] = [model.get("model_name", "") for model in model_config["embedding"]]
-        except Exception as e:
-            logger.error(f"加载model_config.json出错: {e}")
-    
-    return model_options 
+    参数:
+        category: 可选的模型类别筛选器（'chat' 或 'embedding'）
+    """
+    try:
+        result = {"models":{}}
+        
+        # 如果指定了类别
+        if category:
+            result['models'][category] = await get_available_models(category)
+        else:
+            # 默认行为：按类别返回所有模型
+            result['models']["chat"] = await get_available_models("chat")
+            result['models']["embedding"] = await get_available_models("embedding")
+        
+        return result
+    except Exception as e:
+        logger.error(f"获取模型失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取模型失败: {str(e)}")

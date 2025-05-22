@@ -613,12 +613,6 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
             if "data" in response_data and len(response_data["data"]) > 0:
                 embeddings = [item["embedding"] for item in response_data["data"]]
                 
-                # Record usage information if available
-                if "usage" in response_data:
-                    logger.debug(
-                        f"Embedding usage: {response_data['usage']['prompt_tokens']} tokens"
-                    )
-                
                 return ModelResponse(embedding=embeddings, raw=response_data)
             else:
                 raise ValueError(f"Invalid response format: {response_data}")
@@ -671,12 +665,6 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
             # Extract embeddings
             if "data" in response_data and len(response_data["data"]) > 0:
                 embeddings = [item["embedding"] for item in response_data["data"]]
-                
-                # Record usage information if available
-                if "usage" in response_data:
-                    logger.debug(
-                        f"Embedding usage: {response_data['usage']['prompt_tokens']} tokens"
-                    )
                 
                 return ModelResponse(embedding=embeddings, raw=response_data)
             else:

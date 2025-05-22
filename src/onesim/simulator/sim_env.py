@@ -23,7 +23,6 @@ from onesim.distribution.node import get_node, NodeRole
 from onesim.distribution.distributed_lock import get_lock
 from onesim.config import get_component_registry
 from datetime import datetime
-
 # Use aiofiles for asynchronous file operations
 import aiofiles
 import aiofiles.os
@@ -46,7 +45,7 @@ class SimulationState(Enum):
 class SimulationConfig:
     """Configuration class for simulation environment."""
     mode: SimulationMode = SimulationMode.TIMED
-    max_rounds: int = 1
+    max_steps: int = 1
     interval: float = 60.0
     bus_idle_timeout: float = 120.0  # Time to wait before considering event bus as idle
     export_training_data: bool = False  # Whether to export training data
@@ -91,7 +90,7 @@ class BasicSimEnv:
             config['bus_idle_timeout'] = config.get('bus_idle_timeout', 10.0)
             self.config = SimulationConfig(
                 mode=SimulationMode(config.get('mode', SimulationMode.TIMED.value)),
-                max_rounds=config.get('max_rounds', 3),
+                max_steps=config.get('max_steps', 3),
                 interval=config.get('interval', 60.0),
                 bus_idle_timeout=config.get('bus_idle_timeout', 30.0),
                 export_training_data=config.get('export_training_data', False),
@@ -114,7 +113,7 @@ class BasicSimEnv:
                 
         self.event_bus = event_bus
         self.mode = self.config.mode
-        self.max_rounds = self.config.max_rounds
+        self.max_steps = self.config.max_steps
         self.agents = agents
         self.env_path = env_path
         self.tot_time = 0.0
@@ -146,12 +145,12 @@ class BasicSimEnv:
         self._event_manager = EventManager() if trail_id else None
         self._decision_manager = DecisionManager() if trail_id else None
         self._agent_manager = AgentManager() if trail_id else None
-        # Temporary storage for events and decisions to be saved at the end of each round
+        # Temporary storage for events and decisions to be saved at the end of each step
         self._pending_events = []
         self._pending_decisions = []
         
         # Set to track agents that have made decisions
-        self._agent_decisions: Dict[int, Dict[str, int]] = {}  # round_num -> set of agent_ids
+        self._agent_decisions: Dict[int, Dict[str, int]] = {}  # step_num -> set of agent_ids
         
         # Register data event handlers
         self.register_event("DataEvent", "handle_data_event")
@@ -339,7 +338,7 @@ class BasicSimEnv:
                             
                             # Additional state can contain any agent-specific data not covered by standard fields
                             additional_state = {
-                                "current_round": 0, # Will change to current_step later if needed
+                                "current_step": 0, # Will change to current_step later if needed
                             
                             }
                             await self._agent_manager.save_agent_state(
@@ -360,7 +359,7 @@ class BasicSimEnv:
             logger.error(f"Error saving initial environment state: {e}")
 
     async def _save_step_data(self, step_num: int):
-        """Save environment state, events, and decisions for a completed round"""
+        """Save environment state, events, and decisions for a completed step"""
         try:
             await self.collect_metrics()
 
@@ -373,7 +372,7 @@ class BasicSimEnv:
                     state=state_data
                 )
                 
-                # Save state for each agent at this round
+                # Save state for each agent at this step
                 # Use self.agents.values() directly assuming it's a dict {type: {id: agent}}
                 # or adjust if the structure is different {id: agent}
                 agents_to_save = []
@@ -384,7 +383,7 @@ class BasicSimEnv:
                     for agent_id, agent in agents_to_save:
                         try:
                             # We don't need to register agents here since they should have been
-                            # registered in _save_initial_state or elsewhere before rounds begin
+                            # registered in _save_initial_state or elsewhere before steps begin
                             
                             # Extract agent data asynchronously if methods are async
                             profile = agent.get_profile() if hasattr(agent, 'get_profile') else None
@@ -406,7 +405,7 @@ class BasicSimEnv:
                                 universe_id="main"
                             )
                         except Exception as e:
-                            logger.warning(f"Failed to save state for agent {agent_id} at round {round_num}: {e}")
+                            logger.warning(f"Failed to save state for agent {agent_id} at step {step_num}: {e}")
             
             # 2. Save pending events
             if self._event_manager and self._pending_events:
@@ -416,7 +415,7 @@ class BasicSimEnv:
                         trail_id=self.trail_id,
                         **event_data
                     )
-                logger.info(f"Saved {len(self._pending_events)} events for round {step_num}")
+                logger.info(f"Saved {len(self._pending_events)} events for step {step_num}")
                 self._pending_events = []  # Clear after saving
             
             # 3. Save pending decisions
@@ -424,20 +423,10 @@ class BasicSimEnv:
                 for decision_data in self._pending_decisions:
                     await self._decision_manager.record_decision(
                         trail_id=self.trail_id,
-                        step=step_num,
                         **decision_data
                     )
-                logger.info(f"Saved {len(self._pending_decisions)} decisions for round {step_num}")
-                
-                # Only clear decisions if we're not going to use them for direct export
-                # or if we've successfully recorded them in the database
-                # if not self.config.export_training_data:
-                #     self._pending_decisions = []  # Clear after saving
-                # else:
-                #     # Add round info to each decision before keeping for export
-                for decision in self._pending_decisions:
-                    if 'round' not in decision or decision['round'] == None:
-                        decision['round'] = step_num
+                logger.info(f"Saved {len(self._pending_decisions)} decisions for step {step_num}")
+                    
                 
             # Update step count in trail
             if self._trail_manager:
@@ -504,7 +493,7 @@ class BasicSimEnv:
             # Export metrics as images if save directory is available
             if self.metrics_save_dir:
                 try:
-                    # Create round-specific directory asynchronously
+                    # Create step-specific directory asynchronously
                     step_dir = os.path.join(self.metrics_save_dir, f'step_{self.current_step}')
                     await aiofiles.os.makedirs(step_dir, exist_ok=True)
                     
@@ -537,11 +526,8 @@ class BasicSimEnv:
                     monitor_manager = registry.get_instance("monitor")
                     
                     if monitor_manager:
-                        logger.info(f"Exporting metrics for step {self.current_step}") # Changed round to step
-                        
-                        # Using the new unified export interface (original comment: 使用新的统一导出接口)
-                        monitor_manager.export_metrics_as_images(step_dir, self.current_step) # Pass step_dir
-                        logger.info(f"Metrics plots saved to {step_dir}")
+                        monitor_manager.export_metrics_as_images(step_dir, self.current_step)
+                        logger.info(f"Metrics plots for step {self.current_step} saved to {step_dir}")
                     else:
                         logger.warning("No monitor manager found in registry for metrics")
                         
@@ -550,43 +536,37 @@ class BasicSimEnv:
                     logger.error
                 
         except Exception as e:
-            logger.error(f"Error saving round {step_num} data: {e}")
+            logger.error(f"Error saving step {step_num} data: {e}")
+            import traceback
+            error_traceback = traceback.format_exc()
+            logger.error(f"Error saving step {step_num} data: {e}\nTraceback: {error_traceback}")
 
     # Methods to queue events and decisions for later saving
     async def queue_event(self, event_data: Dict[str, Any]):
-        """Queue an event to be saved at the end of the round and broadcast it"""
-        #if self.trail_id:
-        if event_data.get("event_kind") in ["StartEvent","EndEvent","PauseEvent","ResumeEvent","DataEvent","DataUpdateEvent","DataResponseEvent","DataUpdateResponseEvent"]:
-            return
+        """Queue an event to be saved at the end of the step and broadcast it"""
         
         self._pending_events.append(event_data)
         
         # Get environment name from path
         env_name = os.path.basename(self.env_path)
-        
-        # Add round number to event data if available
+        # Add step number to event data if available
         if hasattr(self, 'current_step'):
             event_data['step'] = self.current_step
         
-        # Import connection manager (avoid circular imports)
         import sys
-        if 'app' not in sys.modules:
+        if 'backend' not in sys.modules:
             return
-            
         from backend.utils.websocket import connection_manager
-        
         # Broadcast event asynchronously
-        # Note: event_data already contains timestamp and all necessary fields
-        #print("event_data",event_data)
         asyncio.create_task(connection_manager.broadcast_event(env_name, event_data))
     
     async def queue_decision(self, decision_data: Dict[str, Any]):
-        """Queue a decision to be saved at the end of the round"""
-        # if self.trail_id:
+        """Queue a decision to be saved at the end of the step"""
+        if 'step' not in decision_data or decision_data['step'] == None:
+            decision_data['step'] = self.current_step
         self._pending_decisions.append(decision_data)
-        logger.info(f"Pending decisions length: {len(self._pending_decisions)}")
 
-        # Track which agents have made decisions this round
+        # Track which agents have made decisions this step
         agent_type = decision_data.get('agent_type')
         if agent_type:
             current_step_val = self.current_step # Use the unified counter
@@ -729,7 +709,7 @@ class BasicSimEnv:
             # Reset pause time accumulator for the next round
             self._pause_cumulative_time = 0.0
             
-            if self.current_step < self.max_rounds:
+            if self.current_step < self.max_steps:
                 self.current_step += 1
                 await self.start()
             else:
@@ -1009,10 +989,11 @@ class BasicSimEnv:
             for target_id in self.start_targets[agent_type]:
                 start_event = await self._create_start_event(target_id)
                 assert self.scheduler is not None
+                await self.queue_event(start_event.to_dict())
                 self.scheduler.schedule_task(
                     self.config.interval, 
                     start_event,
-                    max_count=self.config.max_rounds
+                    max_count=self.config.max_steps
                 )
 
     async def _create_start_event(self, target_id: int) -> Event:
@@ -1033,7 +1014,7 @@ class BasicSimEnv:
     async def start(self, **kwargs: Any) -> None:
         """Trigger start event to begin or continue the workflow."""
         if self.mode == SimulationMode.ROUND:
-            if self.current_step > self.max_rounds:
+            if self.current_step > self.max_steps:
                 logger.info("Maximum steps (rounds) reached. No more steps will be started.")
                 return
             
@@ -1044,6 +1025,7 @@ class BasicSimEnv:
             for agent_type in self.start_targets.keys():
                 for target_id in self.start_targets[agent_type]:
                     event = await self._create_start_event(target_id)
+                    await self.queue_event(event.to_dict())
                     await self.event_bus.dispatch_event(event)
 
 
@@ -1158,7 +1140,7 @@ class BasicSimEnv:
             # Or it's self.current_step if it represents the *next* trigger to be scheduled/processed.
             # Let's assume self.current_step correctly represents the number of triggers processed or the current trigger index.
             # The definition of self.current_step for TIMED mode needs to be consistent with its use in scheduler and completion.
-            # If scheduler runs `max_rounds` times, and `current_step` increments after each EndEvent in timed mode,
+            # If scheduler runs `max_steps` times, and `current_step` increments after each EndEvent in timed mode,
             # then `total_triggers` would be `self.current_step -1` at the end, or use a separate counter for processed triggers.
 
             # For now, let's keep total_triggers as self.current_step and refine if needed.
@@ -1181,8 +1163,8 @@ class BasicSimEnv:
             # How many agents completed *at least* N triggers
             cumulative_distribution = {}
             
-            # max_completed_triggers could be self.config.max_rounds or max(completion_counts.keys())
-            # Let's use self.config.max_rounds as the upper limit for reporting
+            # max_completed_triggers could be self.config.max_steps or max(completion_counts.keys())
+            # Let's use self.config.max_steps as the upper limit for reporting
             sorted_unique_completions = sorted(completion_counts.keys())
 
             # Calculate agent completion distribution: for each number of triggers completed (X), how many agents completed X triggers.
@@ -1194,8 +1176,8 @@ class BasicSimEnv:
             cumulative_distribution_map = {}
             num_total_relevant_agents = len(self.agent_triggers) # Agents that participated in at least one trigger
             
-            # Iterate from max_rounds down to 1 for "at least" count
-            for i in range(self.config.max_rounds, 0, -1):
+            # Iterate from max_steps down to 1 for "at least" count
+            for i in range(self.config.max_steps, 0, -1):
                 count_at_least_i = 0
                 for completed_count, num_agents in agent_completion_counts.items():
                     if completed_count >= i:

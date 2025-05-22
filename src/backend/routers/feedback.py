@@ -42,7 +42,7 @@ def get_env_lock(env_name):
 async def get_decisions(env_name: str):
     """获取决策数据"""
     # 检查环境是否存在
-    env_path = os.path.join("./envs", env_name)
+    env_path = os.path.join("src", "envs", env_name)
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
     
@@ -77,7 +77,7 @@ async def update_decision_data(request: UpdateDecisionDataRequest):
     updated_data = request.updated_data
     
     # 检查环境是否存在
-    env_path = os.path.join("./envs", env_name)
+    env_path = os.path.join("src", "envs", env_name)
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
     
@@ -164,7 +164,7 @@ async def rate_decision_data(request: RateDecisionDataRequest):
     model_name = request.model_name
     
     # 检查环境是否存在
-    env_path = os.path.join("./envs", env_name)
+    env_path = os.path.join("src", "envs", env_name)
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
     
@@ -263,7 +263,7 @@ async def refine_decision_data(request: RefineDecisionDataRequest):
     model_name = request.model_name
     
     # 检查环境是否存在
-    env_path = os.path.join("./envs", env_name)
+    env_path = os.path.join("src", "envs", env_name)
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
     
@@ -392,7 +392,7 @@ async def save_decision_data(request: SaveDecisionDataRequest):
     env_name = request.env_name
     
     # 检查环境是否存在
-    env_path = os.path.join("./envs", env_name)
+    env_path = os.path.join("src", "envs", env_name)
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
     

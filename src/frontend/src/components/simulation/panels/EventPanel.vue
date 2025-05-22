@@ -160,7 +160,6 @@ export default {
 
     // Get event data from store
     const events = computed(() => gameStore.getEventsData || []);
-
     const searchQuery = ref("");
     const currentPage = ref(1);
     const pageSize = ref(10);
@@ -188,7 +187,6 @@ export default {
                 event.data.content.toLowerCase().includes(searchLower))
             );
           });
-      
       // Sort by timestamp in descending order, latest events shown first
       return filtered.sort((a, b) => b.timestamp - a.timestamp);
     });

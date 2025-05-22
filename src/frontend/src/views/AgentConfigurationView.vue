@@ -949,40 +949,38 @@ export default {
     saveConfiguration() {
       //在最终保存前先保存人员数量信息
       this.isLoading = true;
-      let data = {
+      let param = {
         env_name: localStorage.getItem('scenarioName'),
-        agent_types: this.agentCounts,
-        model_name: this.$route.query.model_name,
-        category: this.$route.query.category,
+        agent_schemas: this.schemaData, 
       };
-
-      axios.post("/api/pipeline/generate_profiles",data).then((response) => {
+      axios.post("/api/pipeline/profile_schema", param).then((response) => {
         console.log("response", response);
-        this.$nextTick(()=>{
-          // Create config object that includes only configured agent types
-          const configObj = {};
-          for (const agentType of this.configuredAgentTypes) {
-            configObj[agentType] = {
-              properties: this.schemaData[agentType],
-              count: this.agentCounts[agentType] || this.getDefaultCount(agentType),
-            };
-          }
-          localStorage.setItem("agentPropertiesConfig", JSON.stringify(configObj));
-          localStorage.setItem("agentCounts", JSON.stringify(this.agentCounts));
-
-          let param = {
-            env_name: localStorage.getItem('scenarioName'),
-            agent_schemas: this.schemaData, 
-          };
-          axios.post("/api/pipeline/profile_schema", param).then((response) => {
-            console.log("response", response);
+        let data = {
+          env_name: localStorage.getItem('scenarioName'),
+          agent_types: this.agentCounts,
+          model_name: this.$route.query.model_name,
+          category: this.$route.query.category,
+        };
+        axios.post("/api/pipeline/generate_profiles",data).then((response) => {
+          console.log("response", response);
+          this.$nextTick(()=>{
+            // Create config object that includes only configured agent types
+            const configObj = {};
+            for (const agentType of this.configuredAgentTypes) {
+              configObj[agentType] = {
+                properties: this.schemaData[agentType],
+                count: this.agentCounts[agentType] || this.getDefaultCount(agentType),
+              };
+            }
+            localStorage.setItem("agentPropertiesConfig", JSON.stringify(configObj));
+            localStorage.setItem("agentCounts", JSON.stringify(this.agentCounts));
             this.isLoading = false;
             this.$nextTick(()=>{
               // 触发事件进入下一步
               this.$emit("step-complete");
             })
-          });
-        })
+          })
+        });
       });
     },
 

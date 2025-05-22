@@ -115,15 +115,11 @@ runs/
 *large*
 !src/onesim/proto/*.pyi
 input/
-dataset/
 datasets/
-front_end/
 metrics_plots/
-src/envs/*/events/
+events/
 logs/
-log/
 .DS_Store
 generation_statistics.json
-metrics_plots/
 node_modules/
 research/

@@ -128,29 +128,6 @@ def Opinion_Leader_Influence_Strength_Distribution(data: Dict[str, Any]) -> Any:
             log_metric_error("Opinion Leader Influence Strength Distribution", ValueError("Invalid data input"), {"data": data})
             return {}
 
-        print('!-' * 50)
-        print(data)
-
-        # Extract influence_strength values from OpinionLeaderAgent
-        # influence_strengths = safe_get(data, 'OpinionLeaderAgent', [])
-        # influence_strengths = safe_list(influence_strengths)
-        # print(influence_strengths)
-
-        # # Filter out None values and ensure all elements are numbers
-        # valid_influence_strengths = [v for v in influence_strengths if isinstance(v, (int, float)) and v is not None]
-
-        # print(valid_influence_strengths)
-
-        # # If the list is empty after filtering, return an empty distribution
-        # if not valid_influence_strengths:
-        #     return {}
-
-        # # Aggregate influence strengths
-        # total_strength = safe_sum(valid_influence_strengths)
-        
-        # # Handle division by zero scenario
-        # if total_strength == 0:
-        #     return {}
         valid_influence_strengths = data['influence_strength']
         total_strength = safe_sum(valid_influence_strengths)
 
@@ -160,7 +137,6 @@ def Opinion_Leader_Influence_Strength_Distribution(data: Dict[str, Any]) -> Any:
             for i, strength in enumerate(valid_influence_strengths)
         }
 
-        print(distribution)
 
         return distribution
 
@@ -189,94 +165,3 @@ def get_metric_function(function_name: str) -> Optional[Callable]:
     return METRIC_FUNCTIONS.get(function_name)
 
 
-def test_metric_function(function_name: str, test_data: Dict[str, Any]) -> Any:
-    """
-    测试指标计算函数
-    
-    Args:
-        function_name: 函数名
-        test_data: 测试数据
-        
-    Returns:
-        指标计算结果
-    """
-    func = get_metric_function(function_name)
-    if func is None:
-        raise ValueError(f"找不到指标函数: {function_name}")
-    
-    try:
-        result = func(test_data)
-        print(f"指标 {function_name} 计算结果: {result}")
-        return result
-    except Exception as e:
-        log_metric_error(function_name, e, {"test_data": test_data})
-        raise
-
-
-def generate_test_data() -> Dict[str, Any]:
-    """
-    生成用于测试的示例数据
-    
-    Returns:
-        示例数据字典
-    """
-    # 创建一个包含常见数据类型和边界情况的测试数据字典
-    return {
-        # 环境变量示例
-        "total_steps": 100,
-        "current_time": 3600,
-        "resource_pool": 1000,
-        
-        # 正常代理变量示例（列表）
-        "agent_health": [100, 90, 85, 70, None, 60],
-        "agent_resources": [50, 40, 30, 20, 10, None],
-        "agent_age": [10, 20, 30, 40, 50, 60],
-        
-        # 边界情况
-        "empty_list": [],
-        "none_value": None,
-        "zero_value": 0,
-        
-        # 错误类型示例
-        "should_be_list_but_single": 42,
-        "invalid_number": "not_a_number",
-    }
-
-
-def test_all_metrics(test_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    测试所有指标函数
-    
-    Args:
-        test_data: 测试数据，如果为None则使用生成的示例数据
-        
-    Returns:
-        测试结果字典，键为函数名，值为计算结果或错误信息
-    """
-    if test_data is None:
-        test_data = generate_test_data()
-        
-    results = {}
-    for func_name, func in METRIC_FUNCTIONS.items():
-        try:
-            result = func(test_data)
-            results[func_name] = result
-        except Exception as e:
-            results[func_name] = f"ERROR: {str(e)}"
-            log_metric_error(func_name, e, {"test_data": test_data})
-    
-    return results
-
-
-# 如果直接运行此模块，执行所有指标的测试
-if __name__ == "__main__":
-    
-    print("生成测试数据...")
-    test_data = generate_test_data()
-    
-    print("测试所有指标函数...")
-    results = test_all_metrics(test_data)
-    
-    print("\n测试结果:")
-    for func_name, result in results.items():
-        print(f"{func_name}: {result}")

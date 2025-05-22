@@ -4,7 +4,7 @@ import uuid
 from enum import Enum
 from onesim.utils.common import gen_id
 import time
-
+import datetime
 
 class EventType(Enum):
     QUERY = "query"
@@ -31,6 +31,8 @@ class Event:
         # Core event identity fields
         self.event_id: str = kwargs.get("event_id", gen_id())
         self.timestamp: float = kwargs.get("timestamp", time.time())
+        if isinstance(self.timestamp, datetime.datetime):
+            self.timestamp=float(self.timestamp.timestamp())
         self.event_kind: str = self.__class__.__name__ if "event_kind" not in kwargs else kwargs["event_kind"]
         
         # Source and target identifiers

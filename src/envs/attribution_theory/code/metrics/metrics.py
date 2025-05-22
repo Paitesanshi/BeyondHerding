@@ -34,8 +34,6 @@ def Attribution_Type_Distribution(data: Dict[str, Any]) -> Dict[str, float]:
         # Filter out None values from the list
         # valid_attributions = [attr for attr in attribution_type_list if attr is not None]
 
-        
-        # print(valid_attributions)
 
         results = {}
         for x in attribution_type_list:

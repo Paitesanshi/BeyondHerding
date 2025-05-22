@@ -3,7 +3,7 @@
         "environment": {
             "name": "labor_market_matching_process",
             "mode": "round",
-            "max_rounds": 3,
+            "max_steps": 3,
             "interval": 60.0,
             "bus_idle_timeout": 30.0,
             "export_training_data": false,
@@ -67,7 +67,7 @@
         "password": "123456"
     },
     "distribution": {
-        "enabled": true,
+        "enabled": false,
         "mode": "single",
         "node_id": "1",
         "master_address": "localhost",

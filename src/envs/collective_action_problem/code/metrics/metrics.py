@@ -6,14 +6,14 @@
 from typing import Dict, Any, List, Optional, Union, Callable
 import math
 from loguru import logger
-from onesim.monitor.utils import (
+from agentgo.monitor.utils import (
     safe_get, safe_number, safe_list, safe_sum, 
     safe_avg, safe_max, safe_min, safe_count, log_metric_error
 )
 
 
 from typing import Dict, Any
-from onesim.monitor.utils import safe_list, safe_avg, log_metric_error
+from agentgo.monitor.utils import safe_list, safe_avg, log_metric_error
 
 def Average_Cooperation_Willingness(data: Dict[str, Any]) -> Any:
     """
@@ -70,7 +70,7 @@ def Collective_Action_Success_Rate(data: Dict[str, Any]) -> Any:
     注意:
         此函数处理各种异常情况，包括None值、空列表和类型错误等
     """
-    from onesim.monitor.utils import (
+    from agentgo.monitor.utils import (
         safe_get,
         safe_list,
         safe_count,
@@ -121,7 +121,7 @@ def Total_Group_Benefit(data: Dict[str, Any]) -> Any:
     注意:
         此函数处理各种异常情况，包括None值、空列表和类型错误等
     """
-    from onesim.monitor.utils import (
+    from agentgo.monitor.utils import (
         safe_get, safe_number, log_metric_error
     )
     

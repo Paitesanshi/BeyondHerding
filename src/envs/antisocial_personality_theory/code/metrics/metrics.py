@@ -35,20 +35,10 @@ def Manipulation_Strategy_Distribution(data: Dict[str, Any]) -> Dict[str, int]:
         # interaction_status_list = safe_list(safe_get(data, 'interaction_status', []))
         manipulation_strategy_list = safe_list(safe_get(data, 'manipulation_strategy', []))
 
-        print('-' * 50)
-        # print(interaction_status_list)
-        print(manipulation_strategy_list)
 
         # Initialize counts dictionary
         counts = {}
 
-        # Process interaction_status_list
-        # for status in interaction_status_list:
-        #     if status:  # Ensure status is not None or empty
-        #         if status in counts:
-        #             counts[status] += 1
-        #         else:
-        #             counts[status] = 1
 
         # Process manipulation_strategy_list
         for strategy in manipulation_strategy_list:

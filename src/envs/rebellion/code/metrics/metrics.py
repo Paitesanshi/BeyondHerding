@@ -35,8 +35,6 @@ def Average_Grievance_Level(data: Dict[str, Any]) -> Dict[str, float]:
     try:
         # Access the grievance_level list from the data
         grievance_levels = safe_list(safe_get(data, 'grievance_level', []))
-        print('-' * 50)
-        print(grievance_levels)
 
         # Filter out None and non-float values
         valid_grievance_levels = [level for level in grievance_levels if isinstance(level, (int, float))]

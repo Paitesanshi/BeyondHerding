@@ -221,13 +221,6 @@ class WorkflowAgent(AgentBase):
                 "   - Each action should have a condition field describing ONLY necessary prerequisites\n"
                 "   - Focus on structural requirements: what inputs/components/data must exist\n"
                 "   - DO NOT include subjective decision logic (e.g., 'if price is good' or 'when demand is high')\n"
-                # "   - Examples of good conditions:\n"
-                # "      * 'Requires both component A and component B to be available'\n"
-                # "      * 'Must have customer profile and payment info'\n"
-                # "      * 'Requires prior approval event from Manager'\n"
-                # "   - Examples of bad conditions:\n"
-                # "      * 'Buy if price is low; wait if price is high' (subjective decision)\n"
-                # "      * 'Triggered by market conditions' (too vague)\n"
                 "   - Use null if there are no specific prerequisites (any input event triggers action)\n"
                 "   - Action type (OR/AND/XOR) determines how multiple inputs are handled\n\n"
 
@@ -539,93 +532,6 @@ class WorkflowAgent(AgentBase):
         Returns:
             A dictionary with the verification result and any issues found.
         """
-#         prompt =f"""
-# Comprehensive Information Extraction Validation Task
-
-# Description:
-# ```
-# {description}
-# ```
-
-# Agent Types:
-# ```
-# {agent_types}
-# ```
-
-# Extracted Workflow Information:
-# ```
-# {json.dumps(extracted_info, indent=2)}
-# ```
-
-# Objective: 
-# - Validate the extracted workflow information represents a complete and functional system
-# - Ensure the workflow logically implements the business requirements
-# - Note: The description provides high-level business requirements - the workflow may include additional technical details and intermediate steps necessary for proper implementation
-
-
-# Validation Dimensions:
-# 1. Start Events Validation
-#    - Verify each StartEvent:
-#      * Uses standard "StartEvent" naming
-#      * Has no data fields (data should come from env.get_data)
-#      * Has valid target agent and action
-#    - Confirm parallel workflow branches are properly identified
-#    - Ensure StartEvent leads to all subsequent actions through valid paths.
-#    - Note: StartEvent is a system abstraction and may not be explicitly mentioned in the description.
-
-# 2. Terminal Events Validation
-#    - Verify each workflow branch has appropriate termination
-#    - Confirm all terminal events properly target EnvAgent.terminate
-#    - Check terminal events maintain workflow context
-#    - Ensure all terminal events are reachable from StartEvent through valid paths.
-#    - Note: EnvAgent is a system abstraction and may not be explicitly mentioned in the description.
-
-# 3. Agent Type Consistency
-#    - Verify all mentioned agents (excluding StartEvent/EnvAgent) exist in the original description
-#    - Confirm agent names match exactly
-
-# 4. Action Validation
-#    - Check each action against the description
-#    - Ensure actions comprehensively cover workflow steps
-#    - Validate action functionality matches description
-#    - Note: Actions may include:
-#      * Explicitly described business steps
-#      * Implicit intermediate steps needed for proper operation
-#      * Technical steps required by system architecture
-
-# 5. Event Flow Analysis
-#    - Verify event sequences reflect description logic  
-#    - Validate inter-agent event communication paths
-#    - Check event flow completeness
-#    - Note: Event flows may include:
-#      * Business level events from description
-#      * Technical events needed for proper operation
-#      * Coordination events between workflow stages
-
-# 6. Semantic Alignment
-#    - Verify the workflow fulfills the business requirements
-#    - Confirm all critical business outcomes are achievable
-#    - Note: Focus on functional completeness rather than strict textual alignment
-
-# Verification Criteria:
-# - **Pass:** Core workflow logic captured, complete action coverage
-# - **Partial:** Minor omissions or mismatched logic
-# - **Fail:** Missing critical workflow elements or incorrect logic flow
-
-# Output Format:
-# {{
-#   "verification": "Pass" | "Fail", 
-#   "issues": ["Detailed issue explanation"],
-#   "suggestions": ["Suggestion for improvement"]
-# }}
-
-# Validation Guidelines:
-# - Focus on functional completeness and correctness
-# - Accept necessary technical and coordination components
-# - Allow implicit intermediate steps needed for workflow operation
-# - Validate against business requirements rather than exact description text
-# - Remember descriptions are typically high-level, implementation details may require additional components
-# """
 
         structural_passed, structural_issues, structural_suggestions = self.validate_workflow_structural(extracted_info)
 
@@ -874,16 +780,6 @@ Output Format:
         for agent_type, acts in actions.items():
             agent_action_list.append({"agent":agent_type,"actions":[a["name"] for a in acts]})
 
-        # events_list = []
-        # for e in events.values():
-        #     if e['event_name']:
-        #         events_list.append({
-        #             "event_name": e['event_name'],
-        #             "from_agent_type": e['from_agent_type'],
-        #             "to_agent_type": e['to_agent_type'],
-        #             "event_info": e['event_info'],
-        #             "event_fields": [f['name'] for f in e.get('fields', [])]
-        #         })
 
         prompt = f"""
 Action Requirements Enhancement Task

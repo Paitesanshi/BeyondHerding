@@ -550,9 +550,12 @@ async def generate_workflow_endpoint(data: EnvRequest):
     # This check is moved here - if files exist but status wasn't 1, load them and set status to 1.
     if os.path.exists(actions_path) and os.path.exists(events_path) and os.path.exists(system_data_model_path):
         try:
-            with open(actions_path, 'r', encoding='utf-8') as f: actions = json.load(f)
-            with open(events_path, 'r', encoding='utf-8') as f: events = json.load(f)
-            with open(system_data_model_path, 'r', encoding='utf-8') as f: system_data_model = json.load(f)
+            with open(actions_path, 'r', encoding='utf-8') as f: 
+                actions = json.load(f)
+            with open(events_path, 'r', encoding='utf-8') as f: 
+                events = json.load(f)
+            with open(system_data_model_path, 'r', encoding='utf-8') as f: 
+                system_data_model = json.load(f)
 
             # Validate loaded data looks reasonable
             if actions and events: # Basic check

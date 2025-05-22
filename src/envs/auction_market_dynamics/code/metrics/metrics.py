@@ -45,15 +45,6 @@ def Bidding_Decision_Over_Time(data: Dict[str, Any]) -> Any:
             return {}
 
         # Retrieve the list of private values from Buyer agents
-        print('+' * 50)
-        print(data)
-        # private_values = safe_get(data, "Buyer", [])
-        # print(private_values)
-        # # private_values = [safe_get(buyer, "private_value") for buyer in safe_list(private_values)]
-        # private_values = [safe_get(buyer, "bidding_decision") for buyer in safe_list(private_values)]
-
-        # print('?' * 50)
-        # print(private_values)
 
 
 
@@ -157,7 +148,6 @@ def test_metric_function(function_name: str, test_data: Dict[str, Any]) -> Any:
     
     try:
         result = func(test_data)
-        print(f"指标 {function_name} 计算结果: {result}")
         return result
     except Exception as e:
         log_metric_error(function_name, e, {"test_data": test_data})
@@ -218,16 +208,3 @@ def test_all_metrics(test_data: Optional[Dict[str, Any]] = None) -> Dict[str, An
     
     return results
 
-
-# 如果直接运行此模块，执行所有指标的测试
-if __name__ == "__main__":
-    
-    print("生成测试数据...")
-    test_data = generate_test_data()
-    
-    print("测试所有指标函数...")
-    results = test_all_metrics(test_data)
-    
-    print("\n测试结果:")
-    for func_name, result in results.items():
-        print(f"{func_name}: {result}")

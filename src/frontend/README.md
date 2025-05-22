@@ -21,9 +21,6 @@ AI Behavior Sim is a Vue.js-based application that allows users to:
 ### Installation
 
 ```bash
-# Clone the repository (if applicable)
-cd src/frontend
-
 # Install dependencies
 npm install
 # or 
@@ -86,3 +83,12 @@ yarn preview
 
 6. **Development Mode**: Special tools and features for developers
 
+## Technologies Used
+
+- Vue 3 (Composition API)
+- Vue Router for navigation
+- Pinia for state management
+- PixiJS for map rendering and visualization
+- Element Plus for UI components
+- CodeMirror/Monaco for code editing capabilities
+- ECharts for data visualization

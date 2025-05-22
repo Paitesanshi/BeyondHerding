@@ -1,12 +1,12 @@
 
-from onesim.events import Event
+from agentgo.events import Event
 from typing import Dict, List, Any        
 from datetime import datetime
 
 
 from typing import Any, List
 from datetime import datetime
-from onesim.events import Event
+from agentgo.events import Event
 
 class CooperationDecisionEvent(Event):
     def __init__(self,
@@ -26,7 +26,7 @@ class CooperationDecisionEvent(Event):
 
 from typing import Any, List
 from datetime import datetime
-from onesim.events import Event
+from agentgo.events import Event
 
 class StartEvent(Event):
     def __init__(self,
@@ -38,7 +38,7 @@ class StartEvent(Event):
 
 from typing import Any, List
 from datetime import datetime
-from onesim.events import Event
+from agentgo.events import Event
 
 class CollectiveActionResultEvent(Event):
     def __init__(self,

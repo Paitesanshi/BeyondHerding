@@ -8,27 +8,27 @@ import { defineStore } from 'pinia'
 export const useGameStore = defineStore('game', {
     state: () => ({
 
-        isPaused: true,   // 游戏是否暂停
-        gameSpeed: 1,      // 游戏速度倍率：1倍速或3倍速
+        isPaused: true, // 游戏是否暂停
+        gameSpeed: 0.5, // 游戏速度倍率：1倍速或3倍速
 
         // PIXI应用实例
-        pixiApp: null,     // 存储PIXI应用实例
-        viewport: null,    // 存储视口实例
+        pixiApp: null, // 存储PIXI应用实例
+        viewport: null, // 存储视口实例
         cameraController: null, // 存储相机控制器
 
         // 人口相关状态
-        populationTotal: 200,  // 人口总数上限
-        populationCreated: 0,    // 已创建的人口数量
-        populationOutdoor: 0,    // 室外人口数量
-        populationSize: 300,     // 每次生成的人口数量
-        unitCapacity: 2,         // 每单位宽度的人物容量值
+        populationTotal: 200, // 人口总数上限
+        populationCreated: 0, // 已创建的人口数量
+        populationOutdoor: 0, // 室外人口数量
+        populationSize: 300, // 每次生成的人口数量
+        unitCapacity: 2, // 每单位宽度的人物容量值
 
         // 人物数据
-        characters: [],          // 存储所有人物实例（室内和室外）
+        characters: [], // 存储所有人物实例（室内和室外）
         focusedCharacterId: null, // 当前焦点关注的角色ID
 
         // 开发者模式状态
-        isDevMode: false,       // 是否启用开发者模式
+        isDevMode: false, // 是否启用开发者模式
         // 设置状态
         isSettingComplete: false, // 设置是否完成
         isStart: false, // 是否开始
@@ -37,20 +37,20 @@ export const useGameStore = defineStore('game', {
         // 存储格式为: {gridX,gridY} -> buildingId
         // 这个数据来源于TilemapRenderer.vue中的gridToBuildingMap变量
         buildingData: new Map(),
-        
+
         // 建筑物原始数据，存储props.mapData.buildingData
         buildingOriginalData: [],
-        
+
         // 新增：建筑对象数组，类似于characters数组
         buildings: [],
 
         // 系统配置
-        systemConfig:[],
+        systemConfig: [],
 
         // agents数据
-        agentsData:[],
+        agentsData: [],
         //events数据
-        eventsData:[],
+        eventsData: [],
         //events原始数据
         eventsOriginalData: [],
     }),
@@ -122,15 +122,15 @@ export const useGameStore = defineStore('game', {
         getBuildingAt: (state) => (gridX, gridY) => {
             return state.buildingData.get(`${gridX},${gridY}`);
         },
-        
+
         // 新增：获取所有建筑
         getAllBuildings: (state) => state.buildings,
-        
+
         // 新增：根据ID获取建筑
         getBuildingById: (state) => (buildingId) => {
             return state.buildings.find(building => building.buildingId === buildingId);
         },
-        
+
         // 新增：根据坐标获取建筑对象
         getBuildingByCoordinates: (state) => (x, y) => {
             const buildingId = state.buildingData.get(`${x},${y}`);
@@ -172,7 +172,7 @@ export const useGameStore = defineStore('game', {
 
         // 切换游戏速度（在1、2、3、4、5之间循环切换）
         toggleGameSpeed() {
-            this.gameSpeed = this.gameSpeed < 5 ? this.gameSpeed + 1 : 1;
+            this.gameSpeed = Math.ceil(this.gameSpeed) < 5 ? this.gameSpeed + 1 : 0.5;
             console.log(`游戏速度已切换为${this.gameSpeed}倍速`);
         },
 
@@ -208,7 +208,7 @@ export const useGameStore = defineStore('game', {
 
         // 设置人口总数上限
         setPopulationTotal(total) {
-            console.log("setPopulationTotal",total);
+            console.log("setPopulationTotal", total);
             if (total >= 1 && total <= 50000) {
                 this.populationTotal = total;
                 console.log(`人口总数上限已设置为${total}`);
@@ -280,7 +280,7 @@ export const useGameStore = defineStore('game', {
             if (!character.hasOwnProperty('isVisible')) {
                 character.isVisible = false;
             }
-            
+
             this.characters.push(character);
         },
 
@@ -298,7 +298,7 @@ export const useGameStore = defineStore('game', {
         updateCharacter(id, data) {
             const index = this.characters.findIndex(char => char.id === id);
             if (index !== -1) {
-                this.characters[index] = { ...this.characters[index], ...data };
+                this.characters[index] = {...this.characters[index], ...data };
             }
         },
 
@@ -328,23 +328,23 @@ export const useGameStore = defineStore('game', {
 
         // 更新系统配置
         updateSystemConfig(config) {
-            this.systemConfig = { ...this.systemConfig, ...config };
+            this.systemConfig = {...this.systemConfig, ...config };
             console.log('系统配置已更新');
         },
 
         // 设置当前焦点角色ID
         setFocusedCharacterId(id) {
             this.focusedCharacterId = id;
-            
+
             // 更新所有角色的isFocused状态
             this.characters.forEach(char => {
                 // 比较agentId而不是id，确保正确匹配角色
                 const isFocused = char.agentId === id;
                 char.isFocused = isFocused;
-                
+
                 // 不在这里处理可见性，移至updateCameraFollow方法中
             });
-            
+
             console.log(`已设置焦点角色ID: ${id || '无'}`);
         },
 
@@ -352,23 +352,23 @@ export const useGameStore = defineStore('game', {
         clearFocusedCharacterId(previousId = null) {
             // 获取要清除的角色ID
             const targetId = previousId || this.focusedCharacterId;
-            
+
             // 如果没有目标ID，直接返回
             if (!targetId) return;
-            
+
             // 获取目标焦点角色信息
             const focusedCharacter = this.characters.find(char => char.agentId === targetId);
-            
+
             // 处理目标焦点角色所在建筑物的可见性
             if (focusedCharacter && focusedCharacter.isIndoor && focusedCharacter.sprite) {
                 // 获取室内地板和楼层精灵
                 const roomSprite = focusedCharacter.sprite.parent; // 室内地板
-                const floorSprite = roomSprite?.parent; // 楼层精灵
-                
+                const floorSprite = roomSprit.parent; // 楼层精灵
+
                 // 隐藏室内地板
                 if (roomSprite) {
                     roomSprite.visible = false;
-                                        
+
                     // 隐藏室内地板上的所有人物
                     if (roomSprite.indoorCharacters) {
                         roomSprite.indoorCharacters.forEach(character => {
@@ -376,9 +376,9 @@ export const useGameStore = defineStore('game', {
                         });
                     }
                 }
-                
+
                 // 恢复楼层精灵的透明度和zIndex
-                if (floorSprite) {                    
+                if (floorSprite) {
                     // 恢复原始zIndex
                     if (floorSprite.originalZIndex !== undefined) {
                         floorSprite.zIndex = floorSprite.originalZIndex;
@@ -386,12 +386,12 @@ export const useGameStore = defineStore('game', {
                     }
                 }
             }
-            
+
             // 清除所有角色的isFocused状态
             this.characters.forEach(char => {
                 char.isFocused = false;
             });
-            
+
             // 仅当清除当前焦点角色时，才设置为null
             if (!previousId) {
                 this.focusedCharacterId = null;
@@ -417,37 +417,37 @@ export const useGameStore = defineStore('game', {
             this.buildingData.clear();
             console.log('已清空建筑数据Map');
         },
-        
+
         // 设置原始建筑数据数组
         setBuildingOriginalData(buildingDataArray) {
             this.buildingOriginalData = buildingDataArray;
-            console.log('已更新原始建筑数据数组',this.buildingOriginalData);
+            console.log('已更新原始建筑数据数组', this.buildingOriginalData);
         },
-        
+
         // 新增：设置建筑对象数组
         setBuildings(buildings) {
             this.buildings = buildings;
             console.log(`已设置${buildings.length}个建筑对象`);
         },
-        
+
         // 新增：添加单个建筑到数组
         addBuilding(building) {
             this.buildings.push(building);
         },
-        
+
         // 新增：批量添加建筑到数组
         addBuildings(buildingArray) {
             this.buildings.push(...buildingArray);
         },
-        
+
         // 新增：根据ID更新建筑数据
         updateBuilding(buildingId, data) {
             const index = this.buildings.findIndex(building => building.buildingId === buildingId);
             if (index !== -1) {
-                this.buildings[index] = { ...this.buildings[index], ...data };
+                this.buildings[index] = {...this.buildings[index], ...data };
             }
         },
-        
+
         // 新增：根据ID删除建筑
         removeBuilding(buildingId) {
             const index = this.buildings.findIndex(building => building.buildingId === buildingId);
@@ -455,89 +455,89 @@ export const useGameStore = defineStore('game', {
                 this.buildings.splice(index, 1);
             }
         },
-        
+
         // 新增：清空所有建筑
         clearBuildings() {
             this.buildings = [];
             console.log('已清空所有建筑数据');
         },
-        
+
         // 设置PIXI应用实例
         setPixiApp(app) {
             this.pixiApp = app;
             console.log('已设置PIXI应用实例');
         },
-        
+
         // 设置视口实例
         setViewport(viewport) {
             this.viewport = viewport;
             console.log('已设置视口实例');
         },
-        
+
         // 设置相机控制器
         setCameraController(controller) {
             this.cameraController = controller;
             console.log('已设置相机控制器');
         },
-        
+
         // 清理PIXI资源
         clearPixiResources() {
             if (this.viewport) {
                 this.viewport.destroy();
                 this.viewport = null;
             }
-            
+
             if (this.pixiApp) {
                 this.pixiApp.destroy(true, { children: true, texture: true, baseTexture: true });
                 this.pixiApp = null;
             }
-            
+
             console.log('已清理PIXI资源');
         },
-        
+
         // 重置所有状态
         resetState() {
             // 重置游戏状态
             this.isPaused = true;
-            this.gameSpeed = 1;
+            this.gameSpeed = 0.5;
             this.isStart = false;
-            
+
             // 清理PIXI相关实例
             this.clearPixiResources();
             this.pixiApp = null;
             this.viewport = null;
             this.cameraController = null;
-            
+
             // 重置人口相关数据
             this.populationTotal = 200;
             this.populationCreated = 0;
             this.populationOutdoor = 0;
             this.populationSize = 300;
             this.unitCapacity = 2;
-            
+
             // 清空人物数据
             this.characters = [];
             this.focusedCharacterId = null;
-            
+
             // 不重置开发者模式状态(isDevMode保持不变)
-            
+
             // 重置设置状态
             this.isSettingComplete = false;
-            
+
             // 清空建筑物数据
             this.buildingData = new Map();
             this.buildingOriginalData = [];
             this.buildings = [];
-            
+
             // 清空系统配置
             this.systemConfig = [];
-            
+
             // 清空agents和events数据
             this.agentsData = [];
             this.eventsData = [];
             this.eventsOriginalData = [];
-            
+
             console.log('游戏状态已完全重置');
         }
     }
-}) 
+})

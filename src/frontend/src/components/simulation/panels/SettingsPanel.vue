@@ -14,8 +14,8 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
-				<el-form-item label="Max Rounds">
-					<el-input-number v-model="formData.environment.max_rounds" :min="1" :max="3"></el-input-number>
+				<el-form-item label="Max Steps">
+					<el-input-number v-model="formData.environment.max_steps" :min="1" :max="3"></el-input-number>
 				</el-form-item>
 
 				<!-- Agent Settings -->
@@ -159,7 +159,7 @@ const formData = reactive({
 	environment: {
 		name: "",
 		mode: "",
-		max_rounds: 3,
+		max_steps: 3,
 		modes: [],
 	},
 	agent: {
@@ -348,7 +348,7 @@ const handleReset = () => {
 			name: "broken_window_theory",
 			mode: "round",
 			modes: ["round", "tick"],
-			max_rounds: 3,
+			max_steps: 3,
 		},
 		agent: {
 			profile: {

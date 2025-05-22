@@ -1016,23 +1016,14 @@ class MonitorManager:
             plt.close()
         
         if 'total_tokens' in metrics_data:
-            plt.figure(figsize=(10, 6))
+            fig = plt.figure(figsize=(10, 6))
             plt.plot(metrics_data['total_tokens'], marker='o')
             plt.title('Total Tokens Over Time')
             plt.xlabel('Step')
             plt.ylabel('Total Tokens')
+            plt.savefig(os.path.join(save_dir, 'total_tokens.png'))
         
-        # # Plot agent participation heatmap
-        # if 'agent_participation' in metrics_data:
-        #     plt.figure(figsize=(12, 8))
-        #     participation_data = metrics_data['agent_participation']
-        #     sns.heatmap(participation_data, annot=True, fmt='d', cmap='YlOrRd')
-        #     plt.title('Agent Participation Heatmap')
-        #     plt.xlabel('Step')
-        #     plt.ylabel('Agent ID')
-        #     plt.savefig(os.path.join(save_dir, 'agent_participation.png'))
-        #     plt.close()
-        
+            plt.close(fig)
         
         # Save metrics data as JSON for reference
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -1114,6 +1105,7 @@ class MonitorManager:
         
         # Plot each registered metric
         for metric_name, result in self.results.items():
+            fig = None
             try:
                 metric_def = self.metrics.get(metric_name)
                 if not metric_def:
@@ -1210,7 +1202,6 @@ class MonitorManager:
                 round_info = f"_round{round_num}" if round_num is not None else ""
                 filename = f"{metric_name}{round_info}_{timestamp}.png"
                 plt.savefig(os.path.join(metric_dir, filename), dpi=300, bbox_inches='tight')
-                plt.close(fig)
                 
                 # 保存原始数据为JSON
                 data_filename = f"{metric_name}{round_info}_{timestamp}.json"
@@ -1218,11 +1209,13 @@ class MonitorManager:
                     # Save the data used for plotting instead of the raw data
                     json.dump(data, f, indent=4)
                     
-                
             except Exception as e:
                 logger.error(f"Error plotting metric {metric_name}: {e}")
+            finally:
+                # Always close the figure, even if an exception occurs
+                if fig is not None:
+                    plt.close(fig)
                 
-    
     def export_metrics_as_images(self, save_dir: str, round_num: Optional[int] = None) -> None:
         """
         将所有指标保存为本地图片文件（综合接口）
@@ -1231,20 +1224,24 @@ class MonitorManager:
             save_dir (str): 图片保存目录
             round_num (Optional[int]): 当前回合数（可选）
         """
-        # 1. 创建保存目录
-        os.makedirs(save_dir, exist_ok=True)
-        
-        # 2. 导出常规指标图表（使用现有方法）
-        # 收集常规指标数据
-        general_metrics = self.collect_metrics(self.env.data if hasattr(self, 'env') and self.env else {}, round_num)
-        general_dir = os.path.join(save_dir, 'general')
-        self.plot_metrics(general_metrics, general_dir, round_num)
-        logger.info(f"Saved general metrics plots to {general_dir}")
-        
-        # 3. 导出注册的特定指标图表
-        self.plot_registered_metrics(save_dir, round_num)
-        logger.info(f"Saved registered metrics plots to {save_dir}")
-    
+        try:
+            # 1. 创建保存目录
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # 2. 导出常规指标图表（使用现有方法）
+            # 收集常规指标数据
+            general_metrics = self.collect_metrics(self.env.data if hasattr(self, 'env') and self.env else {}, round_num)
+            general_dir = os.path.join(save_dir, 'general')
+            self.plot_metrics(general_metrics, general_dir, round_num)
+            logger.info(f"Saved general metrics plots to {general_dir}")
+            
+            # 3. 导出注册的特定指标图表
+            self.plot_registered_metrics(save_dir, round_num)
+            logger.info(f"Saved registered metrics plots to {save_dir}")
+        finally:
+            # Make sure to close any remaining figures
+            plt.close('all')
+
     def _normalize_line_data(self, raw_result: Any) -> Any:
         """
         规范化折线图数据格式，确保存储的是一致格式

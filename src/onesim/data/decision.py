@@ -35,6 +35,8 @@ class DecisionManager:
                              prompt: str,
                              output: str,
                              decision_id: Optional[str] = None,
+                             agent_type: Optional[str] = None,
+                             action: Optional[str] = None,
                              event_id: Optional[str] = None,
                              context: Optional[Dict[str, Any]] = None,
                              processing_time: Optional[float] = None,
@@ -95,7 +97,8 @@ class DecisionManager:
                 decision_id, 
                 trail_id, 
                 universe_id, 
-                agent_id, 
+                agent_id,
+                agent_type, 
                 step,
                 timestamp,
                 event_id,
@@ -103,6 +106,7 @@ class DecisionManager:
                 prompt,
                 output,
                 processing_time,
+                action,
                 feedback,
                 rating,
                 reason,
@@ -179,7 +183,10 @@ class DecisionManager:
             params.append(end_step)
         
         query = f"""
-        SELECT * FROM agent_decisions
+        SELECT decision_id, trail_id, universe_id, agent_id, agent_type, step, timestamp,
+               event_id, context, prompt, output, processing_time, action, feedback,
+               rating, reason, created_at
+        FROM agent_decisions
         WHERE {' AND '.join(conditions)}
         ORDER BY step ASC
         LIMIT {limit}
@@ -367,7 +374,10 @@ class DecisionManager:
         where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         
         query = f"""
-        SELECT * FROM agent_decisions
+        SELECT decision_id, trail_id, universe_id, agent_id, agent_type, step, timestamp,
+               event_id, context, prompt, output, processing_time, action, feedback,
+               rating, reason, created_at
+        FROM agent_decisions
         {where_clause}
         ORDER BY timestamp ASC
         LIMIT {limit}
@@ -400,8 +410,8 @@ class DecisionManager:
             import io
             
             output = io.StringIO()
-            fieldnames = ['decision_id', 'trail_id', 'universe_id', 'agent_id', 
-                         'step', 'timestamp', 'prompt', 'output', 'feedback',
+            fieldnames = ['decision_id', 'trail_id', 'universe_id', 'agent_id', 'agent_type',
+                         'step', 'timestamp', 'prompt', 'output', 'action', 'feedback',
                          'rating', 'reason']
             
             if include_context:
@@ -514,4 +524,4 @@ class DecisionManager:
             "avg_processing_time": avg_processing_time,
             "agents": agents,
             "steps": steps
-        } 
+        }

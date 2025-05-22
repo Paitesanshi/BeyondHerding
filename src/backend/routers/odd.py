@@ -88,7 +88,7 @@ DOMAIN_LIST = [
 def setup_environment(env_name: str):
     """Set up environment directory structure"""
     base_path = os.path.abspath(os.getcwd())
-    env_path = os.path.join(base_path, "envs", env_name)
+    env_path = os.path.join(base_path, "src", "envs", env_name)
     create_directory(env_path)
     init_package(env_path)
     return env_path
@@ -258,7 +258,7 @@ async def confirm_scene(confirmation: SceneConfirmation):
     
     # Check if target directory exists and clear if it does
     base_path = os.path.abspath(os.getcwd())
-    env_path = os.path.join(base_path, "envs", scene_name)
+    env_path = os.path.join(base_path, "src", "envs", scene_name)
     message_suffix = ""
     if os.path.exists(env_path):
         try:
@@ -336,7 +336,7 @@ async def get_odd_protocol(session_id: str, env_name: Optional[str] = None):
         if env_name:
             # Attempt to load directly from env_name/scene_info.json
             base_path = os.path.abspath(os.getcwd())
-            scene_info_path = os.path.join(base_path, "envs", env_name, "scene_info.json")
+            scene_info_path = os.path.join(base_path, "src", "envs", env_name, "scene_info.json")
             
             if not os.path.exists(scene_info_path):
                 logger.warning(f"scene_info.json not found at {scene_info_path}")
@@ -413,7 +413,7 @@ def check_scene_name(data: SceneNameCheck):
     
     # Check if scene directory already exists
     base_path = os.path.abspath(os.getcwd())
-    scene_path = os.path.join(base_path, "envs", data.scene_name)
+    scene_path = os.path.join(base_path, "src", "envs", data.scene_name)
     
     if os.path.exists(scene_path):
         return SceneNameCheckResponse(

@@ -106,7 +106,8 @@ def build_graph(conf: OneSimConfig, agent_factory):
     
     # Create work graph
     simulator_config = conf.simulator_config
-    work_graph = WorkGraph(actions, events)
+    work_graph = WorkGraph()
+    work_graph.load_workflow_data(actions, events)
     start_agent_types = work_graph.get_start_agent_types()
     end_agent_types = work_graph.get_end_agent_types()
     start_agent_ids = agent_factory.get_agent_profile_ids(start_agent_types)
@@ -158,7 +159,8 @@ async def initialize_distributed_environment(config: OneSimConfig, args):
         actions_path = os.path.join(config.env_path, "actions.json")
         events = parse_json(events_path)
         actions = parse_json(actions_path)
-        work_graph = WorkGraph(actions, events)
+        work_graph = WorkGraph()
+        work_graph.load_workflow_data(actions, events)
         
         # Create a proxy environment for worker node
         logger.info(f"Creating ProxyEnv for worker node {node.node_id}")

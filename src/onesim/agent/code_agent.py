@@ -133,6 +133,8 @@ class StartEvent(Event):
             
             # Phase 2: Validate and fix code
             status_dict["phase"] = 2
+            if "all_content" not in status_dict:
+                status_dict["all_content"] = ""
             status_dict["all_content"] += status_dict["content"]
             status_dict["content"] = "Starting code refinement...\n"
             

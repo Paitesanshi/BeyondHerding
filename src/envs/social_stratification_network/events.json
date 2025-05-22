@@ -3,182 +3,34 @@
         "id": -1,
         "from_agent_type": "EnvAgent",
         "from_action_name": "start",
-        "to_agent_type": "Individual",
-        "to_action_name": "identify_exchange_partners",
+        "to_agent_type": "Family",
+        "to_action_name": "decide_education_investment",
         "from_action_id": 0,
         "to_action_id": 1,
         "event_name": "StartEvent",
-        "event_info": "Initial trigger for individuals to start identifying potential exchange partners",
+        "event_info": "Initial trigger for families to decide on educational investments",
         "fields": []
     },
     "-2": {
         "id": -2,
         "from_agent_type": "EnvAgent",
         "from_action_name": "start",
-        "to_agent_type": "Family",
-        "to_action_name": "decide_education_investment",
+        "to_agent_type": "EducationalInstitution",
+        "to_action_name": "receive_application",
         "from_action_id": 0,
         "to_action_id": 5,
         "event_name": "StartEvent",
-        "event_info": "Initial trigger for families to decide on educational investments",
-        "fields": []
-    },
-    "-3": {
-        "id": -3,
-        "from_agent_type": "EnvAgent",
-        "from_action_name": "start",
-        "to_agent_type": "EducationalInstitution",
-        "to_action_name": "select_students",
-        "from_action_id": 0,
-        "to_action_id": 8,
-        "event_name": "StartEvent",
-        "event_info": "Initial trigger for educational institutions to start selecting students",
-        "fields": []
-    },
-    "-4": {
-        "id": -4,
-        "from_agent_type": "EnvAgent",
-        "from_action_name": "start",
-        "to_agent_type": "Employer",
-        "to_action_name": "evaluate_candidates",
-        "from_action_id": 0,
-        "to_action_id": 10,
-        "event_name": "StartEvent",
-        "event_info": "Initial trigger for employers to start evaluating candidates for hiring",
+        "event_info": "Initial trigger for educational institutions to receive applications",
         "fields": []
     },
     "1": {
         "id": 1,
-        "from_agent_type": "Individual",
-        "from_action_name": "identify_exchange_partners",
-        "to_agent_type": "Individual",
-        "to_action_name": "evaluate_exchange_value",
-        "from_action_id": 1,
-        "to_action_id": 2,
-        "event_name": "ExchangePartnerIdentifiedEvent",
-        "event_info": "Individual identifies a potential partner for resource exchange",
-        "fields": [
-            {
-                "name": "initiator_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the individual initiating the exchange identification"
-            },
-            {
-                "name": "partner_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the potential exchange partner identified"
-            },
-            {
-                "name": "trust_level",
-                "type": "float",
-                "default_value": "0.0",
-                "description": "Trust level between the initiator and the partner"
-            }
-        ]
-    },
-    "2": {
-        "id": 2,
-        "from_agent_type": "Individual",
-        "from_action_name": "evaluate_exchange_value",
-        "to_agent_type": "Individual",
-        "to_action_name": "execute_exchange",
-        "from_action_id": 2,
-        "to_action_id": 3,
-        "event_name": "ExchangeEvaluatedEvent",
-        "event_info": "Evaluation of potential exchange value and risks completed",
-        "fields": [
-            {
-                "name": "initiator_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the individual evaluating the exchange"
-            },
-            {
-                "name": "partner_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the exchange partner being evaluated"
-            },
-            {
-                "name": "exchange_value",
-                "type": "float",
-                "default_value": "0.0",
-                "description": "Calculated value of the exchange"
-            },
-            {
-                "name": "risk_assessment",
-                "type": "float",
-                "default_value": "0.0",
-                "description": "Assessment of risks associated with the exchange"
-            }
-        ]
-    },
-    "3": {
-        "id": 3,
-        "from_agent_type": "Individual",
-        "from_action_name": "execute_exchange",
-        "to_agent_type": "Individual",
-        "to_action_name": "update_social_capital",
-        "from_action_id": 3,
-        "to_action_id": 4,
-        "event_name": "ExchangeExecutedEvent",
-        "event_info": "Execution of the resource exchange between individuals",
-        "fields": [
-            {
-                "name": "initiator_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the individual executing the exchange"
-            },
-            {
-                "name": "partner_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the exchange partner"
-            },
-            {
-                "name": "resources_exchanged",
-                "type": "dict",
-                "default_value": "{}",
-                "description": "Details of resources exchanged between individuals"
-            }
-        ]
-    },
-    "4": {
-        "id": 4,
-        "from_agent_type": "Individual",
-        "from_action_name": "update_social_capital",
-        "to_agent_type": "EnvAgent",
-        "to_action_name": "terminate",
-        "from_action_id": 4,
-        "to_action_id": -1,
-        "event_name": "SocialCapitalUpdatedEvent",
-        "event_info": "Individual's social capital updated post-exchange",
-        "fields": [
-            {
-                "name": "individual_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the individual whose social capital is updated"
-            },
-            {
-                "name": "social_capital_change",
-                "type": "float",
-                "default_value": "0.0",
-                "description": "Amount of change in social capital post-exchange"
-            }
-        ]
-    },
-    "5": {
-        "id": 5,
         "from_agent_type": "Family",
         "from_action_name": "decide_education_investment",
         "to_agent_type": "EducationalInstitution",
         "to_action_name": "receive_application",
-        "from_action_id": 5,
-        "to_action_id": 9,
+        "from_action_id": 1,
+        "to_action_id": 5,
         "event_name": "EducationInvestmentDecidedEvent",
         "event_info": "Family decides on education investment and applies to institutions",
         "fields": [
@@ -202,14 +54,14 @@
             }
         ]
     },
-    "6": {
-        "id": 6,
+    "2": {
+        "id": 2,
         "from_agent_type": "Family",
         "from_action_name": "receive_admission_decision",
         "to_agent_type": "Family",
         "to_action_name": "allocate_education_resources",
-        "from_action_id": 6,
-        "to_action_id": 7,
+        "from_action_id": 2,
+        "to_action_id": 3,
         "event_name": "AdmissionDecisionReceivedEvent",
         "event_info": "Family receives admission decision and allocates resources accordingly",
         "fields": [
@@ -227,13 +79,13 @@
             }
         ]
     },
-    "7": {
-        "id": 7,
+    "3": {
+        "id": 3,
         "from_agent_type": "Family",
         "from_action_name": "allocate_education_resources",
         "to_agent_type": "EnvAgent",
         "to_action_name": "terminate",
-        "from_action_id": 7,
+        "from_action_id": 3,
         "to_action_id": -1,
         "event_name": "EducationResourcesAllocatedEvent",
         "event_info": "Family allocates resources for education based on admission decision",
@@ -252,14 +104,14 @@
             }
         ]
     },
-    "8": {
-        "id": 8,
+    "4": {
+        "id": 4,
         "from_agent_type": "EducationalInstitution",
         "from_action_name": "select_students",
         "to_agent_type": "Family",
         "to_action_name": "receive_admission_decision",
-        "from_action_id": 8,
-        "to_action_id": 6,
+        "from_action_id": 4,
+        "to_action_id": 2,
         "event_name": "StudentsSelectedEvent",
         "event_info": "Educational institution selects students based on criteria",
         "fields": [
@@ -277,14 +129,14 @@
             }
         ]
     },
-    "9": {
-        "id": 9,
+    "5": {
+        "id": 5,
         "from_agent_type": "EducationalInstitution",
         "from_action_name": "receive_application",
         "to_agent_type": "EducationalInstitution",
         "to_action_name": "select_students",
-        "from_action_id": 9,
-        "to_action_id": 8,
+        "from_action_id": 5,
+        "to_action_id": 4,
         "event_name": "ApplicationReceivedEvent",
         "event_info": "Application received and processed for student selection",
         "fields": [
@@ -299,68 +151,6 @@
                 "type": "int",
                 "default_value": "0",
                 "description": "ID of the application received"
-            }
-        ]
-    },
-    "10": {
-        "id": 10,
-        "from_agent_type": "Employer",
-        "from_action_name": "evaluate_candidates",
-        "to_agent_type": "Employer",
-        "to_action_name": "make_hiring_decision",
-        "from_action_id": 10,
-        "to_action_id": 11,
-        "event_name": "CandidatesEvaluatedEvent",
-        "event_info": "Evaluation of candidates for potential hiring",
-        "fields": [
-            {
-                "name": "employer_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the employer evaluating candidates"
-            },
-            {
-                "name": "candidate_ids",
-                "type": "list",
-                "default_value": "[]",
-                "description": "List of candidate IDs evaluated"
-            },
-            {
-                "name": "evaluation_scores",
-                "type": "dict",
-                "default_value": "{}",
-                "description": "Scores assigned to candidates based on evaluation"
-            }
-        ]
-    },
-    "11": {
-        "id": 11,
-        "from_agent_type": "Employer",
-        "from_action_name": "make_hiring_decision",
-        "to_agent_type": "EnvAgent",
-        "to_action_name": "terminate",
-        "from_action_id": 11,
-        "to_action_id": -1,
-        "event_name": "HiringDecisionMadeEvent",
-        "event_info": "Employer makes a hiring decision based on evaluations",
-        "fields": [
-            {
-                "name": "employer_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the employer making the hiring decision"
-            },
-            {
-                "name": "hired_candidate_id",
-                "type": "int",
-                "default_value": "0",
-                "description": "ID of the candidate hired"
-            },
-            {
-                "name": "hiring_status",
-                "type": "str",
-                "default_value": "pending",
-                "description": "Status of the hiring decision"
             }
         ]
     }

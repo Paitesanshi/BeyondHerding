@@ -84,17 +84,7 @@ class IndividualAgent(GeneralAgent):
             # Get conformity_threshold with default value
             conformity_threshold = float(self.profile.get_data("conformity_threshold", 1.0))
 
-            # Check if sum is valid before comparison
-            # try:
-            #     combined_influence = float(social_pressure) + leader_influence
-            #     if not (combined_influence >= conformity_threshold):
-            #         return []
-            # except (TypeError, ValueError):
-            #     return []
-            
-            # print('=' * 50)
             conformity_tendency = self.profile.get_data("conformity_tendency", 0.0)
-            # print(f"conformity_tendency: {conformity_tendency}")
 
             observation = f"Social pressure: {social_pressure}, Leader influence: {leader_influence}, Conformity threshold: {conformity_threshold}, Conformity tendency: {conformity_tendency}"
             instruction = """Update the conformity_tendengcy value (must be different from initial value). Evaluate whether the individual's conformity threshold is surpassed by the combined influence of social pressure and leader influence. 
@@ -117,9 +107,6 @@ class IndividualAgent(GeneralAgent):
             self.profile.update_data("conformity_decision", conformity_decision)
             self.profile.update_data("conformity_tendency", conformity_tendency)
 
-
-            # print('=!' * 50)
-            # print(f"conformity_tendency: {conformity_tendency}")
 
             events = []
             individual_id = self.profile_id

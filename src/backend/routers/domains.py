@@ -35,7 +35,7 @@ def get_scene_info_files():
     scene_files = []
     
     # 检查envs
-    env_dirs = glob("envs/*/")
+    env_dirs = glob("src/envs/*/")
     for env_dir in env_dirs:
         scene_file = os.path.join(env_dir, "scene_info.json")
         if os.path.exists(scene_file):
@@ -101,19 +101,19 @@ def get_scenes_for_domain(domain: str):
 @router.get("/scene/{scene_name}")
 def get_scene_details(scene_name: str):
     """获取特定场景的详细信息"""
-    full_path = os.path.join("envs", scene_name, "scene_info.json")
+    full_path = os.path.join("src","envs", scene_name, "scene_info.json")
     scene_details = {}
     try:
         with open(full_path, "r") as f:
             scene_details = json.load(f)
 
-        with open(os.path.join("envs", scene_name, "actions.json"), "r") as f:
+        with open(os.path.join("src","envs", scene_name, "actions.json"), "r") as f:
             actions = json.load(f)
         
-        with open(os.path.join("envs", scene_name, "events.json"), "r") as f:
+        with open(os.path.join("src","envs", scene_name, "events.json"), "r") as f:
             events = json.load(f)
         
-        with open(os.path.join("envs", scene_name, "code", "code_structure.json"), "r") as f:
+        with open(os.path.join("src","envs", scene_name, "code", "code_structure.json"), "r") as f:
             code_structure = json.load(f)
             for agent_type, agent_data in code_structure.get("agents", {}).items():
                 for action_id, handler_data in agent_data.get("handlers", {}).items():

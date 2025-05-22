@@ -43,7 +43,7 @@ def init_package(path: str):
 
 def setup_environment(env_name: str):
     """Set up environment directory structure"""
-    base_path = os.path.join(os.getcwd(), "envs", env_name)
+    base_path = os.path.join(os.getcwd(),"src", "envs", env_name)
     create_directory(base_path)
     
     # Create code directory

@@ -1,9 +1,9 @@
-from onesim.simulator import BasicSimEnv
+from agentgo.simulator import BasicSimEnv
 from .events import StartEvent
 from datetime import datetime
 
 class SimEnv(BasicSimEnv):
-    async def _create_start_event(self, target_id: str) -> StartEvent:
+    def _create_start_event(self, target_id: str) -> StartEvent:
         source_id = self.get_data('id', 'ENV')
         timestamp = datetime.now()
         event_data = {

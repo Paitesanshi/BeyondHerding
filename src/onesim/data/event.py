@@ -22,46 +22,53 @@ class EventManager:
         self.db = db_manager or DatabaseManager.get_instance()
     
     async def create_event(self, 
-                          trail_id: str, 
-                          step: int,
-                          event_type: str,
-                          source_id: str,
-                          target_id: str,
-                          payload: Dict[str, Any],
-                          source_type: Optional[str] = None,
-                          target_type: Optional[str] = None,
+                          trail_id: str,
+                          event_id: str,                 
+                          step: int,                     
+                          event_type: str,               
+                          source_id: str,                
+                          payload: Dict[str, Any],           
+                          timestamp: float,              
+                          target_id: Optional[str] = None,
+                          source_type: Optional[str] = None, 
+                          target_type: Optional[str] = None, 
                           priority: int = 0,
-                          universe_id: str = 'main',
-                          timestamp: Optional[datetime] = None) -> str:
+                          universe_id: str = 'main') -> str:
         """
-        Create a new event
+        Create a new event. This method is designed to be compatible with unpacking 
+        the dictionary from Event.to_dict() along with trail_id and potentially step.
         
         Args:
-            trail_id: Trail ID
-            step: Simulation step
-            event_type: Type of event
-            source_type: Type of source entity (AGENT, ENVIRONMENT, SYSTEM)
-            source_id: ID of source entity
-            payload: Event payload
-            target_type: Type of target entity (optional)
-            target_id: ID of target entity (optional)
-            priority: Event priority (higher numbers = higher priority)
-            universe_id: Universe ID (for parallel universes)
-            timestamp: Timestamp (defaults to current time)
+            trail_id: Trail ID (passed explicitly)
+            event_id: Event ID (from event_data)
+            step: Simulation step (from event_data or explicit)
+            event_type: Type of event (from event_data["event_type"])
+            source_id: ID of source entity (from event_data["source_id"])
+            payload: Event payload/data (from event_data["payload"])
+            timestamp: Event timestamp as a float (from event_data["timestamp"])
+            target_id: ID of target entity (from event_data["target_id"], optional)
+            source_type: Type of source entity. If None, attempts to get from data['source_type'].
+            target_type: Type of target entity. If None, attempts to get from data['target_type'].
+            priority: Event priority
+            universe_id: Universe ID
             
         Returns:
-            event_id: UUID of the created event
+            event_id: The event_id of the created (or processed) event
         """
-        event_id = str(uuid.uuid4())
+        # Use the provided event_id directly
         
         # If database is disabled, just return the ID
         if not self.db.enabled:
-            logger.debug(f"Database disabled, returning generated event ID: {event_id}")
+            logger.debug(f"Database disabled, returning provided event ID: {event_id}")
             return event_id
             
-        if timestamp is None:
-            timestamp = datetime.now()
+        # Convert float timestamp to datetime object for DB
+        dt_timestamp = datetime.fromtimestamp(timestamp)
         
+        # Determine final source_type and target_type
+        final_source_type = source_type if source_type is not None else payload.get('source_type')
+        final_target_type = target_type if target_type is not None else payload.get('target_type')
+
         query = """
         INSERT INTO events (
             event_id, trail_id, universe_id, step, timestamp,
@@ -75,21 +82,21 @@ class EventManager:
         try:
             await self.db.execute(
                 query, 
-                event_id, 
+                event_id,          # Use provided event_id
                 trail_id, 
                 universe_id, 
                 step, 
-                timestamp,
-                event_type,
-                source_type,
-                source_id,
-                target_type,
-                target_id,
+                dt_timestamp,      # Use converted datetime timestamp
+                event_type,        # Directly from parameter
+                final_source_type, # Use determined source_type
+                source_id,         # Directly from parameter
+                final_target_type, # Use determined target_type
+                target_id,         # Directly from parameter
                 priority,
-                json.dumps(payload),
-                False  # not processed yet
+                json.dumps(payload),  # Serialize the 'data' dictionary as payload
+                False              # not processed yet
             )
-            logger.debug(f"Created event {event_type} from {source_id} at step {step}")
+            logger.debug(f"Created event {event_type} from {source_id} at step {step} with ID {event_id}")
             return event_id
         except Exception as e:
             logger.error(f"Failed to create event: {e}")

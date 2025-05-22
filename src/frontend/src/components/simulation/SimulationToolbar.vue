@@ -8,12 +8,13 @@
         {{ getButtonText() }}
       </el-button>
       <!-- Map Generation Control -->
-      <el-button @click="hideAllStatusImages()" class="control-btn" v-else>
+      <!-- <el-button @click="hideAllStatusImages()" class="control-btn" v-else> -->
+      <el-button @click="togglePause_Restart()" class="control-btn" v-else>
         Restart
       </el-button>
       <!-- Game Speed Control -->
       <el-button :type="getSpeedButtonType()" @click="toggleGameSpeed" class="control-btn">
-        {{ gameSpeed }}x Speed
+        {{ Math.ceil(gameSpeed) }}x Speed
       </el-button>
       <el-button class="control-btn" @click="handleEndSimulation" type="danger" :loading="isLoading" v-if="isRunning">
         End
@@ -39,7 +40,7 @@
 
 <script>
 // Import required libraries and components
-import { ref, computed, onMounted, watch, onUnmounted } from "vue";
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
 import { useGameStore } from "../../stores/gameStore";
 import { ElMessage, ElMessageBox } from "element-plus";
 import axios from "axios";
@@ -208,7 +209,8 @@ export default {
 
     // 获取速度按钮类型方法
     const getSpeedButtonType = () => {
-      switch (gameSpeed.value) {
+      const speed = Math.ceil(gameSpeed.value);
+      switch (speed) {
         case 1:
           return "info";
         case 2:
@@ -226,6 +228,11 @@ export default {
 
     // 处理结束模拟点击
     const handleEndSimulation = (data = '') => {
+      if (isEnd.value) {
+        ElMessage.warning("The simulation has ended, please click Restart to begin again.");
+        return;
+      }
+      
       if (data == 'stop') {
         isLoading.value = true;
         axios
@@ -277,7 +284,13 @@ export default {
         })
       }
     };
-
+    const togglePause_Restart = () => {
+      isFirstStart.value = true;
+      isEnd.value = false;
+      nextTick(() => {
+        togglePause();
+      });
+    }
     // 切换游戏暂停/恢复状态
     const togglePause = () => {
       // 如果是第一次启动，需要检查条件
@@ -379,11 +392,12 @@ export default {
 
     // Initialize WebSocket connection
     const initWebSocket = () => {
-      // Determine WebSocket connection address - typically convert HTTP URL to WS URL
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const wsUrl = `ws://111.6.167.248:8000/simulation/ws/${localStorage.getItem('scenarioName')}`;
-      // ws://111.6.167.248:8001/ws/simulation/two_step_flow_model
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.host;
+      // 过滤掉http/https前缀
+      const cleanBaseUrl = apiBaseUrl.replace(/^https?:\/\//, '');
+      const wsUrl = `${protocol}//${cleanBaseUrl}simulation/ws/${localStorage.getItem('scenarioName')}`;
+      
       console.log("Establishing WebSocket connection:", wsUrl);
 
       const socket = new WebSocket(wsUrl);
@@ -412,7 +426,6 @@ export default {
             );
             if (!isDuplicate) {
               eventData.push(data);
-              // Update to store
               gameStore.eventsOriginalData = eventData;
             }
           }
@@ -478,12 +491,12 @@ export default {
       }
 
       // Add keyboard event listener
-      window.addEventListener('keydown', handleKeyDown);
+      // window.addEventListener('keydown', handleKeyDown);
     });
 
     // Remove keyboard event listener on component unmount
     onUnmounted(() => {
-      window.removeEventListener('keydown', handleKeyDown);
+      //window.removeEventListener('keydown', handleKeyDown);
     });
 
     // Return required states and methods
@@ -491,6 +504,7 @@ export default {
       isPaused,
       isRunning,
       gameSpeed,
+      togglePause_Restart,
       togglePause,
       toggleGameSpeed,
       populationTotal,

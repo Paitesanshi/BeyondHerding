@@ -37,9 +37,6 @@ class DecisionContextAgent(GeneralAgent):
         opinion_distribution_received = self.profile.get_data("opinion_distribution_received", False)
         group_opinion_update_received = self.profile.get_data("group_opinion_update_received", False)
 
-        print(opinion_distribution_received)
-        print(group_opinion_update_received)
-
         if not (opinion_distribution_received and group_opinion_update_received):
             return []
 

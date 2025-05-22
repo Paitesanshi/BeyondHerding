@@ -1,19 +1,4 @@
 {
-    "Individual": {
-        "id": "1",
-        "age": "30",
-        "economic": "medium",
-        "cultural": "high",
-        "social": "broad",
-        "symbolic": "recognized",
-        "occupation": "engineer",
-        "income": "50000",
-        "exchange_history": "active",
-        "reciprocity_expectation": "high",
-        "trust_threshold": "0.75",
-        "social_network": "extensive",
-        "generation": "2"
-    },
     "Family": {
         "id": "1",
         "members": [
@@ -34,13 +19,5 @@
         "tuition_fees": "high",
         "prestige": "elite",
         "alumni_network": "strong"
-    },
-    "Employer": {
-        "industry": "technology",
-        "size": "large",
-        "hiring_criteria": "competitive",
-        "compensation_structure": "generous",
-        "promotion_paths": "clear",
-        "status_value": "high"
     }
 }

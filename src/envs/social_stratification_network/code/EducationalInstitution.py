@@ -60,11 +60,9 @@ class EducationalInstitution(GeneralAgent):
         all_selected_student = list(set(self.profile.get_data("all_selected_students", []) + selected_students_ids))
         self.profile.update_data("all_selected_students", all_selected_student)
 
-        # print('-' * 50)
-        # print(applications_received)
         for student in selected_students_ids:
             applications_received = list(filter(lambda x: x != student, applications_received))
-        # print(applications_received)
+
         self.profile.update_data("applications_received", applications_received)
 
 
