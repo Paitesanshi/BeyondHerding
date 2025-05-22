@@ -310,6 +310,12 @@ If you use YuLan-OneSim in your research, please cite our paper:
 }
 ```
 
+## 🙏 Acknowledgments
+
+We would like to express our sincere gratitude to the [AgentScope](https://github.com/modelscope/agentscope) team from Alibaba Tongyi Lab , whose outstanding work has made this project possible. Their contributions have provided a solid foundation and essential tools that greatly enhanced the development process.
+
+Special thanks to [@pan-x-c](https://github.com/pan-x-c) (Xuchen Pan) and [@glendon84](https://github.com/glendon84) (Yaliang Li) for their invaluable guidance and support throughout the development of YuLan-OneSim.
+
 ## 📝 License
 
 This project is licensed under the [Apache-2.0 License](LICENSE).
