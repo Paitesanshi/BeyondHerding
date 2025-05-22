@@ -44,9 +44,7 @@ class DecisionManager:
                              timestamp: Optional[datetime] = None,
                              rating: Optional[float] = None,
                              feedback: Optional[str] = None,
-                             reason: Optional[str] = None,
-                             agent_type: Optional[str] = None,
-                             action: Optional[str] = None) -> str:
+                             reason: Optional[str] = None) -> str:
         """
         Record an agent decision
         
