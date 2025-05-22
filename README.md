@@ -95,11 +95,29 @@ Access the web interface (frontend) at `http://localhost:5173` and the API docum
 
 YuLan-OneSim uses JSON configuration files to control simulation behavior and model settings.
 
+### Environment Configuration (.env files)
+
+The frontend uses environment variables for configuration. Edit the following files in the `src/frontend` directory:
+
+**.env.development**
+```
+# Development API endpoint (local development)
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+**.env.production**
+```
+# Production API endpoint (replace with your actual production server)
+VITE_API_BASE_URL=https://your-production-server.com
+```
+
+These settings determine where the frontend will send API requests based on the environment. The `VITE_API_BASE_URL` variable is essential for connecting the frontend to the correct backend endpoint.
+
 ### Simulation Configuration (`config/config.json`)
 
 The simulation configuration file controls general simulation parameters:
 
-```json
+```json5
 {
   "simulator": {
     "environment": {
@@ -153,7 +171,7 @@ The simulation configuration file controls general simulation parameters:
 
 Specifies the LLMs and embedding models used by the simulator:
 
-```json
+```json5
 {
   "chat": [
     {
