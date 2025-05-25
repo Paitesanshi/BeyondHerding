@@ -237,9 +237,10 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
                 
                 if scenario_id is None:
                     # 创建新场景
+                    env_path=os.path.join("src","envs",env_name)
                     scenario_id = await scenario_mgr.create_scenario(
                         name=env_name,
-                        folder_path=f"src/envs/{env_name}",
+                        folder_path=env_path,
                         description=env_config.get('description', f"Simulation scenario for {env_name}"),
                         tags={
                             "domain": env_config.get('domain', ''), 

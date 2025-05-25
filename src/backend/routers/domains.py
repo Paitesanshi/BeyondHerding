@@ -35,7 +35,8 @@ def get_scene_info_files():
     scene_files = []
     
     # 检查envs
-    env_dirs = glob("src/envs/*/")
+    env_path=os.path.join("src","envs")
+    env_dirs = glob(os.path.join(env_path,"*"))
     for env_dir in env_dirs:
         scene_file = os.path.join(env_dir, "scene_info.json")
         if os.path.exists(scene_file):
