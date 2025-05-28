@@ -99,7 +99,7 @@ class AgentFactory:
         if not os.path.exists(module_path):
             raise FileNotFoundError(f"Agent module file not found: {module_path}")
         
-        env_name = self.env_path.split("/")[-1]
+        env_name = self.env_path.split(os.sep)[-1]
         package_name = f"envs.{env_name}.code"
         module_name = f"{package_name}.{agent_type}"
         

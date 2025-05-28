@@ -362,7 +362,7 @@ class WorkerNode(Node):
         if not os.path.exists(module_path):
             raise FileNotFoundError(f"Agent module file not found: {module_path}")
         
-        env_name = self.env_path.split("/")[-1]
+        env_name = self.env_path.split(os.sep)[-1]
         package_name = f"envs.{env_name}.code"
         module_name = f"{package_name}.{agent_type}"
         spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -393,7 +393,7 @@ class WorkerNode(Node):
     
     def create_local_agents(self, agent_configs: List[Dict]) -> None:
         """Create local agent instances with pre-configured relationships"""
-        env_name= agent_configs[0]["env"].split("/")[-1]
+        env_name= agent_configs[0]["env"].split(os.sep)[-1]
         self.env_path=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'..', "envs", env_name)
         # Group configurations by agent type
         event_bus = get_event_bus()

@@ -50,7 +50,7 @@ def load_scene_info(file_path):
         with open(file_path, "r") as f:
             data = json.load(f)
             # 提取所需字段
-            data['name'] = file_path.split("/")[-2]
+            data['name'] = file_path.split(os.sep)[-2]
             data['description'] = ODDAgent.odd_to_markdown(data['odd_protocol']) if 'odd_protocol' in data else ""
             return data
     except Exception as e:
@@ -78,8 +78,8 @@ def get_scenes_by_domain():
             # 添加到现有领域或在预定义列表中不存在时创建新领域
             if domain in domains:
                 name = scene_data.get("scene_name", scene_data.get("name", ""))
-                if name != os.path.dirname(file_path).split("/")[-1]:
-                    name = os.path.dirname(file_path).split("/")[-1]
+                if name != os.path.dirname(file_path).split(os.sep)[-1]:
+                    name = os.path.dirname(file_path).split(os.sep)[-1]
                 domains[domain].append({
                     "name": name,
                     "description": scene_data.get("description", ""),

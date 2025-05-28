@@ -340,7 +340,7 @@ Return ONLY a valid JSON object with the specified structure.
         # Update scene_info with our data
         # First copy domain and scene_name
         existing_scene_info["domain"] = self.scene_info["domain"]
-        existing_scene_info["scene_name"] = env_path.split("/")[-1] if env_path else self.scene_info["scene_name"]
+        existing_scene_info["scene_name"] = env_path.split(os.sep)[-1] if env_path else self.scene_info["scene_name"]
         
         # Then update odd_protocol
         existing_scene_info["odd_protocol"] = self.scene_info["odd_protocol"]
