@@ -33,7 +33,7 @@ class UpdateWorkflowRequest(BaseModel):
     env_name: str
     actions: Dict[str, Any]
     events: Dict[str, Any]
-    
+
 # Define response model for tips
 class TipsResponse(BaseModel):
     tips: List[str]
@@ -197,20 +197,20 @@ def generate_default_portrait(agent_types):
 async def generate_agent_types_endpoint(data: EnvRequest):
     """Generate agent types"""
     env_name = data.env_name
-    
+
     # Check if environment name exists
     if env_name not in PIPELINE_STATES:
         raise HTTPException(status_code=404, detail="Environment not found, please call /initialize endpoint first")
-    
+
     pipeline_state = PIPELINE_STATES[env_name]
     if not pipeline_state["profile_agent"] or not pipeline_state["description"]:
         # Try to load description if missing
         if not pipeline_state.get("description"):
-             scene_info = pipeline_state.get("scene_info", {})
-             if scene_info:
-                 pipeline_state["description"] = ODDAgent.odd_to_markdown(scene_info)
+            scene_info = pipeline_state.get("scene_info", {})
+            if scene_info:
+                pipeline_state["description"] = ODDAgent.odd_to_markdown(scene_info)
         if not pipeline_state["profile_agent"] or not pipeline_state.get("description"):
-             raise HTTPException(status_code=400, detail="Pipeline not properly initialized or description information is missing")
+            raise HTTPException(status_code=400, detail="Pipeline not properly initialized or description information is missing")
 
     # Check if agent_types already exist, if so return directly
     if pipeline_state.get("agent_types") and pipeline_state.get("portrait"):
@@ -219,13 +219,13 @@ async def generate_agent_types_endpoint(data: EnvRequest):
             env_name=env_name, 
             portrait=pipeline_state["portrait"]
         )
-    
+
     # Check if agent types already exist in file
     env_path = pipeline_state["env_path"]
     scene_info_path = os.path.join(env_path, "scene_info.json")
     if os.path.exists(scene_info_path):
         try:
-            with open(scene_info_path, 'r') as f:
+            with open(scene_info_path, 'r', encoding='utf-8') as f:
                 scene_info = json.load(f)
                 if "agent_types" in scene_info and "portrait" in scene_info:
                     # Update state in memory
@@ -240,7 +240,7 @@ async def generate_agent_types_endpoint(data: EnvRequest):
                     )
         except Exception as e:
             logger.error(f"Error loading scene_info.json: {e}")
-    
+
     # If not in memory or file, generate new agent types
     agent_types = pipeline_state["profile_agent"].generate_agent_types(pipeline_state["description"])
     # Generate portrait assignments
@@ -248,26 +248,26 @@ async def generate_agent_types_endpoint(data: EnvRequest):
     # Store agent types and portrait data
     pipeline_state["agent_types"] = agent_types
     pipeline_state["portrait"] = portrait_assignments
-    
+
     # Save agent types to scene_info.json
     scene_info = {}
-    
+
     if os.path.exists(scene_info_path):
         try:
-            with open(scene_info_path, 'r') as f:
+            with open(scene_info_path, 'r', encoding='utf-8') as f:
                 scene_info = json.load(f)
         except Exception as e:
             logger.error(f"Error loading scene_info.json: {e}")
-    
+
     # Update scene_info with agent types and portrait
     scene_info["agent_types"] = agent_types
     scene_info["portrait"] = portrait_assignments
     PIPELINE_STATES[env_name]["scene_info"] = scene_info
-    
+
     # Save updated scene_info
-    with open(scene_info_path, 'w') as f:
+    with open(scene_info_path, 'w', encoding='utf-8') as f:
         json.dump(scene_info, f, ensure_ascii=False, indent=4)
-    
+
     return AgentTypesResponse(
         agent_types=agent_types, 
         env_name=env_name, 
@@ -679,18 +679,18 @@ async def update_workflow_endpoint(data: UpdateWorkflowRequest):
 def generate_code_endpoint(data: EnvRequest):
     """Start code generation process"""
     env_name = data.env_name
-    
+
     # 检查环境名称是否存在
     if env_name not in PIPELINE_STATES:
         raise HTTPException(status_code=404, detail="Environment not found, please call /initialize endpoint first")
-    
+
     pipeline_state = PIPELINE_STATES[env_name]
     if not pipeline_state["code_agent"] or not pipeline_state["actions"] or not pipeline_state["events"]:
         raise HTTPException(status_code=400, detail="Must generate workflow first")
-    
+
     # 获取代码生成状态
     code_gen_state = pipeline_state.get("code_generation", {})
-    
+
     # 检查是否已经在运行代码生成
     current_phase = code_gen_state.get("phase", 0)
     if current_phase > 0 and current_phase < 4:
@@ -698,7 +698,7 @@ def generate_code_endpoint(data: EnvRequest):
             "message": f"Code generation is in progress (phase {current_phase})",
             "env_name": env_name
         }
-    
+
     # 检查代码是否已生成完成
     env_path = pipeline_state["env_path"]
     code_structure_path = os.path.join(env_path, "code", "code_structure.json")
@@ -707,7 +707,7 @@ def generate_code_endpoint(data: EnvRequest):
         try:
             with open(code_structure_path, 'r', encoding='utf-8') as f:
                 code_structure = json.load(f)
-                
+
             # 检查是否包含必要的结构
             if ("agents" in code_structure and "events" in code_structure and 
                 code_structure["agents"] and code_structure["events"]):
@@ -727,7 +727,7 @@ def generate_code_endpoint(data: EnvRequest):
                 }
         except Exception as e:
             logger.error(f"Error checking existing code structure: {str(e)}")
-    
+
     # 重置代码生成状态
     pipeline_state["code_generation"] = {
         "phase": 1,
@@ -739,7 +739,7 @@ def generate_code_endpoint(data: EnvRequest):
         "progress": 0.0,
         "all_content": ""
     }
-    
+
     # 在后台线程中启动代码生成过程
     def run_code_generation():
         try:
@@ -748,15 +748,21 @@ def generate_code_endpoint(data: EnvRequest):
             code_path = os.path.join(env_path, "code")
             create_directory(code_path)
             init_package(code_path)
-            
+
             # 确保有描述、动作和事件
             if pipeline_state.get("description") is None:
-                with open(os.path.join(env_path, "scene_info.json"), "r") as f:
+                with open(
+                    os.path.join(env_path, "scene_info.json"), "r", encoding='utf-8'
+                ) as f:
                     scene_info = json.load(f)
                 description = ODDAgent.odd_to_markdown(scene_info.get("odd_protocol", {}))
-                with open(os.path.join(env_path, "actions.json"), "r") as f:
+                with open(
+                    os.path.join(env_path, "actions.json"), "r", encoding='utf-8'
+                ) as f:
                     actions = json.load(f)
-                with open(os.path.join(env_path, "events.json"), "r") as f:
+                with open(
+                    os.path.join(env_path, "events.json"), "r", encoding='utf-8'
+                ) as f:
                     events = json.load(f)
             else:
                 description = pipeline_state.get("description")
@@ -773,16 +779,16 @@ def generate_code_endpoint(data: EnvRequest):
             pipeline_state["code_generation"]["phase"] = -1
             pipeline_state["code_generation"]["content"] = f"\nCode generation error: {str(e)}. Please return to the previous step and regenerate."
             logger.error(f"Code generation error: {str(e)}")
-    
+
     # 启动代码生成后台线程
     code_thread = threading.Thread(target=run_code_generation)
     code_thread.daemon = True
     code_thread.start()
-    
+
     # 检查指标是否已生成
     metrics_file_path = os.path.join(env_path, "code", "metrics")
     metrics_exist = os.path.exists(metrics_file_path) and os.path.isdir(metrics_file_path) and len(os.listdir(metrics_file_path)) > 0
-    
+
     # 如果指标尚未生成，则启动指标生成
     if not metrics_exist:
         # 启动指标生成后台线程
@@ -793,53 +799,53 @@ def generate_code_endpoint(data: EnvRequest):
                 metric_agent = pipeline_state["metric_agent"]
                 agent_types = list(pipeline_state["actions"].keys())  # 从actions中获取agent类型
                 system_data_model = pipeline_state["system_data_model"]
-                
+
                 # 生成指标列表
                 metrics = metric_agent.generate_metrics(
                     pipeline_state["description"], 
                     agent_types, 
                     system_data_model
                 )
-                
+
                 if not metrics:
                     logger.warning("Failed to generate any metrics")
                     return
-                
+
                 logger.info(f"Successfully generated {len(metrics)} monitoring metrics")
-                
+
                 # 生成指标计算代码
                 code_path = os.path.join(env_path, "code", "metrics")
                 create_directory(code_path)
                 metric_agent.generate_metrics_module(metrics, code_path, system_data_model)
-                
+
                 # 更新scene_info.json中的配置
                 scene_info_path = os.path.join(env_path, "scene_info.json")
                 if os.path.exists(scene_info_path):
                     with open(scene_info_path, 'r', encoding='utf-8') as f:
                         scene_info = json.load(f)
-                    
+
                     # 格式化指标数据用于存储
                     formatted_metrics = metric_agent.format_metrics_for_export(metrics)
-                    
+
                     # 更新scene_info.json
                     scene_info["metrics"] = formatted_metrics
-                    
+
                     # 保存更新后的scene_info.json
                     with open(scene_info_path, 'w', encoding='utf-8') as f:
                         json.dump(scene_info, f, ensure_ascii=False, indent=2)
-                    
+
                     logger.info(f"Metrics configuration saved to scene_info.json")
-                
+
             except Exception as e:
                 logger.error(f"Metrics generation error: {str(e)}")
-        
+
         # 启动指标生成后台线程
         metric_thread = threading.Thread(target=run_metric_generation)
         metric_thread.daemon = True
         metric_thread.start()
     else:
         logger.info(f"Metrics already exist, skipping generation: {env_name}")
-    
+
     return {
         "message": "Code and metrics generation started. Use /pipeline/code_generation_status to check status",
         "env_name": env_name
@@ -1075,23 +1081,23 @@ def get_profile_schemas(env_name: str):
     # 检查环境名称是否存在
     if env_name not in PIPELINE_STATES:
         raise HTTPException(status_code=404, detail="Environment not found, please call /initialize endpoint first")
-    
+
     # 获取环境路径
     env_path = PIPELINE_STATES[env_name]["env_path"]
-    
+
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"Environment '{env_name}' does not exist")
-    
+
     # 画像模式目录
     schema_dir = os.path.join(env_path, "profile", "schema")
     create_directory(schema_dir)
-    
+
     # 加载场景信息以获取代理类型
     if "scene_info" not in PIPELINE_STATES[env_name]:
         scene_info_path = os.path.join(env_path, "scene_info.json")
         if not os.path.exists(scene_info_path):
             raise HTTPException(status_code=404, detail=f"Scene information file for environment '{env_name}' does not exist")
-    
+
         try:
             with open(scene_info_path, 'r', encoding='utf-8') as f:
                 scene_info = json.load(f)
@@ -1100,23 +1106,23 @@ def get_profile_schemas(env_name: str):
             raise HTTPException(status_code=500, detail=f"Failed to load scene information file: {str(e)}")
     else:
         scene_info = PIPELINE_STATES[env_name]["scene_info"]
-        
+
     agent_types = PIPELINE_STATES[env_name].get("agent_types", {})
-    
+
     # 如果没有定义代理类型，返回空字典
     if not agent_types:
         return {}
-    
+
     # 为每个代理类型加载模式
     schemas = {}
     profile_counts = {}
-    
+
     system_data_model = PIPELINE_STATES[env_name].get("system_data_model", {})
     if not system_data_model and os.path.exists(os.path.join(env_path, "system_data_model.json")):
         with open(os.path.join(env_path, "system_data_model.json"), 'r', encoding='utf-8') as f:
             system_data_model = json.load(f)
     agent_data_model = system_data_model.get("agents", {})
-    
+
     for agent_type in agent_types:
         schema_path = os.path.join(schema_dir, f"{agent_type}.json")
         if os.path.exists(schema_path):
@@ -1126,7 +1132,7 @@ def get_profile_schemas(env_name: str):
             except Exception as e:
                 logger.error(f"Error loading schema for {agent_type}: {e}")
                 schemas[agent_type] = {}
-                
+
             profile_path = os.path.join(env_path, "profile", "data", f"{agent_type}.json")
             if os.path.exists(profile_path):
                 try:
@@ -1142,7 +1148,7 @@ def get_profile_schemas(env_name: str):
             if agent_type in agent_data_model:
                 profile_agent = PIPELINE_STATES[env_name]["profile_agent"]
                 schema = profile_agent.generate_profile_schema(PIPELINE_STATES[env_name]["description"], agent_type, agent_data_model[agent_type])
-                with open(schema_path, "w") as f:
+                with open(schema_path, "w", encoding='utf-8') as f:
                     json.dump(schema, f, ensure_ascii=False, indent=4)
                 schemas[agent_type] = schema
                 profile_counts[agent_type] = 0
@@ -1150,11 +1156,11 @@ def get_profile_schemas(env_name: str):
                 logger.warning(f"Agent type {agent_type} not found in agent_data_model")
                 profile_agent = PIPELINE_STATES[env_name]["profile_agent"]
                 schema = profile_agent.generate_profile_schema(PIPELINE_STATES[env_name]["description"], agent_type, {})
-                with open(schema_path, "w") as f:
+                with open(schema_path, "w", encoding='utf-8') as f:
                     json.dump(schema, f, ensure_ascii=False, indent=4)
                 schemas[agent_type] = schema
                 profile_counts[agent_type] = 0
-    
+
     return {"schemas": schemas, "profile_counts": profile_counts}
 
 @router.post("/profile_schema", response_model=ProfileSchemaResponse)
@@ -1304,30 +1310,29 @@ def save_profile_schema(data: ProfileSchemaRequest):
 async def generate_profiles(data: ProfileGenerationRequest):
     """Generate agent profile data"""
     env_name = data.env_name
-    
+
     # 检查环境名称是否存在
     if env_name not in PIPELINE_STATES:
         raise HTTPException(status_code=404, detail="Environment not found, please call /initialize endpoint first")
-    
+
     # 获取环境路径
     env_path = PIPELINE_STATES[env_name]["env_path"]
-    
+
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"Environment '{env_name}' does not exist")
-    
+
     # 检查画像是否已生成
     profile_data_dir = os.path.join(env_path, "profile", "data")
     relationship_csv_path = os.path.join(profile_data_dir, "Relationship.csv")
     env_data_path = os.path.join(env_path, "env_data.json")
-    
+
     # 创建必要的目录
     create_directory(profile_data_dir)
-    
-        
+
     # 检查每个代理类型是否需要生成新的画像
     profiles_to_generate = {}
     existing_max_id = 0
-    
+
     # 扫描已有的画像文件，统计每个类型已有的画像数量和最大ID
     existing_profiles = {}
     for agent_type in data.agent_types.keys():
@@ -1337,7 +1342,7 @@ async def generate_profiles(data: ProfileGenerationRequest):
                 with open(profile_file, 'r', encoding='utf-8') as f:
                     profiles = json.load(f)
                     existing_profiles[agent_type] = profiles
-                    
+
                     # 获取最大ID
                     for profile in profiles:
                         if 'id' in profile:
@@ -1346,7 +1351,7 @@ async def generate_profiles(data: ProfileGenerationRequest):
                                 existing_max_id = max(existing_max_id, int(profile_id))
                             elif isinstance(profile_id, int):
                                 existing_max_id = max(existing_max_id, profile_id)
-                    
+
                     # 检查是否需要生成更多画像
                     if len(profiles) < data.agent_types[agent_type]:
                         profiles_to_generate[agent_type] = data.agent_types[agent_type] - len(profiles)
@@ -1361,7 +1366,7 @@ async def generate_profiles(data: ProfileGenerationRequest):
             # 文件不存在，需要生成完整数量的画像
             profiles_to_generate[agent_type] = data.agent_types[agent_type]
             logger.info(f"Agent type {agent_type} does not exist profile file, need to generate {profiles_to_generate[agent_type]} profiles")
-    
+
     # 如果不需要生成任何新画像并且其他文件都存在，直接返回
     if not profiles_to_generate and os.path.exists(relationship_csv_path) and os.path.exists(env_data_path):
         # 收集已生成的代理ID
@@ -1369,12 +1374,12 @@ async def generate_profiles(data: ProfileGenerationRequest):
         for agent_type, profiles in existing_profiles.items():
             agent_ids = [profile.get('agent_profile_id', profile.get('id')) for profile in profiles]
             all_agent_ids[agent_type] = [id for id in agent_ids if id]  # 过滤掉None值
-        
+
         # 更新pipeline状态
         PIPELINE_STATES[env_name]["profiles_generated"] = True
         PIPELINE_STATES[env_name]["agent_types"] = list(data.agent_types.keys())
         PIPELINE_STATES[env_name]["all_agent_ids"] = all_agent_ids
-        
+
         logger.info(f"All profile quantities are sufficient, no generation needed: {env_name}")
         return ProfileGenerationResponse(
             env_name=env_name,
@@ -1383,19 +1388,19 @@ async def generate_profiles(data: ProfileGenerationRequest):
             relationship_path=relationship_csv_path,
             env_data_path=env_data_path
         )
-    
+
     # 如果需要生成新画像，加载模型
     model = await load_model_if_needed(data.model_name, data.category)
-    
+
     # 从PIPELINE_STATES获取场景信息和描述（如果可用），否则从文件加载
     description = ""
     scene_info = {}
-    
+
     # 检查PIPELINE_STATES中是否有scene_info
     if "scene_info" in PIPELINE_STATES[env_name]:
         scene_info = PIPELINE_STATES[env_name]["scene_info"]
         description = PIPELINE_STATES[env_name].get("description", "")
-    
+
     # 如果从PIPELINE_STATES中没有scene_info，从文件加载
     if not scene_info:
         scene_info_path = os.path.join(env_path, "scene_info.json")
@@ -1407,14 +1412,14 @@ async def generate_profiles(data: ProfileGenerationRequest):
                     PIPELINE_STATES[env_name]["scene_info"] = scene_info
             except Exception as e:
                 logger.error(f"Error loading scene_info.json: {e}")
-    
+
     # 如果有scene_info，提取描述
     if not description and scene_info:
         description = ODDAgent.odd_to_markdown(scene_info)
-    
+
     all_agent_ids = {}
     index = existing_max_id + 1  # 从当前最大ID加1开始
-    
+
     # 步骤1：为每个需要生成的代理类型生成画像
     from onesim.profile import AgentSchema
     for agent_type, count in profiles_to_generate.items():
@@ -1423,16 +1428,16 @@ async def generate_profiles(data: ProfileGenerationRequest):
         if not os.path.exists(schema_path):
             logger.warning(f"未找到代理类型 {agent_type} 的模式。跳过。")
             continue
-        
+
         try:
             with open(schema_path, 'r', encoding='utf-8') as f:
                 schema_data = json.load(f)
-                
+
             schema = AgentSchema(schema_data)
-            
+
             # 生成画像
             output_path = os.path.join(profile_data_dir, f"{agent_type}.json")
-            
+
             # 使用agent_factory中的方法
             from onesim.simulator import AgentFactory
             # 如果已有画像，我们只生成额外需要的数量
@@ -1444,30 +1449,30 @@ async def generate_profiles(data: ProfileGenerationRequest):
                 output_path=output_path,
                 index=index
             )
-            
+
             # 更新索引和收集ID
             generated_ids = [profile.get_agent_profile_id() for profile in profiles]
             if agent_type in all_agent_ids:
                 all_agent_ids[agent_type].extend(generated_ids)
             else:
                 all_agent_ids[agent_type] = generated_ids
-            
+
             # 更新索引为最新生成的最大ID加1
             if generated_ids:
                 latest_id = max([int(id) if isinstance(id, str) and id.isdigit() else id for id in generated_ids if id])
                 index = max(index, latest_id + 1)
-            
+
             logger.info(f"Generated {len(profiles)} new profiles for agent type {agent_type}")
-            
+
         except Exception as e:
             logger.error(f"Error generating profiles for agent type {agent_type}: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to generate profiles for agent type {agent_type}: {str(e)}")
-    
+
     # 加载所有代理类型的所有画像ID（包括现有和新生成的）
     for agent_type in data.agent_types.keys():
         if agent_type not in all_agent_ids:
             all_agent_ids[agent_type] = []
-            
+
         profile_file = os.path.join(profile_data_dir, f"{agent_type}.json")
         if os.path.exists(profile_file):
             try:
@@ -1477,81 +1482,85 @@ async def generate_profiles(data: ProfileGenerationRequest):
                     all_agent_ids[agent_type] = [id for id in agent_ids if id]  # 过滤掉None值
             except Exception as e:
                 logger.error(f"Error loading profiles for agent type {agent_type}: {e}")
-    
+
     # 步骤2：生成关系模式
     from onesim.agent import ProfileAgent
     profile_agent = ProfileAgent(model_config_name=model.config_name)
-    
+
     agent_types = list(data.agent_types.keys())
     profile_data_path = os.path.join(env_path, "profile", "schema")
     create_directory(profile_data_path)
-    
+
     # 从pipeline状态或文件加载动作和事件
     actions = {}
     events = {}
-    
+
     # 如果可用，从pipeline状态获取
     actions = PIPELINE_STATES[env_name].get("actions", {})
     events = PIPELINE_STATES[env_name].get("events", {})
-    
+
     # 如果在pipeline状态中未找到，尝试从文件加载
     if not actions:
         actions_path = os.path.join(env_path, "actions.json")
         if os.path.exists(actions_path):
-            with open(actions_path, 'r') as f:
+            with open(actions_path, 'r', encoding='utf-8') as f:
                 actions = json.load(f)
-    
+
     if not events:
         events_path = os.path.join(env_path, "events.json")
         if os.path.exists(events_path):
             with open(events_path, 'r', encoding='utf-8') as f:
                 events = json.load(f)
-    
+
     # 生成关系模式
     try:
         schema = profile_agent.generate_relationship_schema(agent_types, actions, events)
-        with open(os.path.join(profile_data_path, f"Relationship.json"), "w") as f:
+        with open(
+            os.path.join(profile_data_path, f"Relationship.json"), "w", encoding='utf-8'
+        ) as f:
             json.dump(schema, f, ensure_ascii=False, indent=4)
         logger.info("Generated relationship schema")
     except Exception as e:
         logger.error(f"Error generating relationship schema: {e}")
         # 即使关系模式生成失败也继续
-    
+
     # 步骤3：生成关系
     relationship_config = {
         "min_relationships_per_agent": 1,
         "max_relationships_per_agent": 3
     }
-    
+
     relationships_list = []
-    
+
     # 基于模式生成关系
     try:
-        with open(os.path.join(profile_data_path, f"Relationship.json"), "r") as f:
+        with open(
+            os.path.join(profile_data_path, f"Relationship.json"), "r", encoding='utf-8'
+        ) as f:
             relationship_schema = json.load(f)
-            
+
         for relationship in relationship_schema:
             source_type = relationship["source_agent"]
             target_type = relationship["target_agent"]
-            #relationship_type = relationship["relationship_type"]
+            # relationship_type = relationship["relationship_type"]
             direction = relationship["direction"]
-            
+
             source_ids = all_agent_ids.get(source_type, [])
             target_ids = all_agent_ids.get(target_type, [])
-            
+
             # 确保有代理可以连接
             if not source_ids or not target_ids:
                 continue
-            
+
             for source_id in source_ids:
                 # 确定每个代理要生成的关系数量
                 min_rel = relationship_config["min_relationships_per_agent"]
                 max_rel = relationship_config["max_relationships_per_agent"]
                 num_relationships = random.randint(min_rel, max_rel)
                 num_relationships = min(num_relationships, len(target_ids))
-                
+
                 selected_target_ids = random.sample(target_ids, num_relationships)
-                
+
                 for target_id in selected_target_ids:
                     relationships_list.append({
                         "source_id": source_id,
@@ -1559,7 +1568,7 @@ async def generate_profiles(data: ProfileGenerationRequest):
                         #"relationship_type": relationship_type,
                         "direction": direction
                     })
-        
+
         # 将关系列表转换为DataFrame并保存到CSV文件
         import pandas as pd
         relationships_df = pd.DataFrame(relationships_list)
@@ -1568,13 +1577,13 @@ async def generate_profiles(data: ProfileGenerationRequest):
     except Exception as e:
         logger.error(f"Error generating relationships: {e}")
         # 即使关系生成失败也继续
-    
+
     # 步骤4：生成环境数据
     try:
         # 从pipeline状态获取系统数据模型
         system_data_model = PIPELINE_STATES[env_name].get("system_data_model", {})
         env_data_model = system_data_model.get('environment', {})
-        
+
         # 如果在pipeline状态中未找到，尝试从文件加载
         if not env_data_model:
             system_data_model_path = os.path.join(env_path, "system_data_model.json")
@@ -1582,11 +1591,11 @@ async def generate_profiles(data: ProfileGenerationRequest):
                 with open(system_data_model_path, 'r', encoding='utf-8') as f:
                     system_data_model = json.load(f)
                     env_data_model = system_data_model.get('environment', {})
-        
+
         # 生成环境数据
         if env_data_model:
             env_data = profile_agent.generate_env_data(env_data_model, description)
-            with open(env_data_path, "w") as f:
+            with open(env_data_path, "w", encoding='utf-8') as f:
                 json.dump(env_data, f, ensure_ascii=False, indent=4)
             logger.info("Generated environment data")
         else:
@@ -1594,13 +1603,13 @@ async def generate_profiles(data: ProfileGenerationRequest):
     except Exception as e:
         logger.error(f"Error generating environment data: {e}")
         # 即使环境数据生成失败也继续
-    
+
     # 更新pipeline状态
     # 标记已生成画像
     PIPELINE_STATES[env_name]["profiles_generated"] = True
     PIPELINE_STATES[env_name]["agent_types"] = agent_types
     PIPELINE_STATES[env_name]["all_agent_ids"] = all_agent_ids
-    
+
     return ProfileGenerationResponse(
         env_name=env_name,
         message="Successfully generated agent profiles, relationships, and environment data",

@@ -47,7 +47,7 @@ def get_scene_info_files():
 def load_scene_info(file_path):
     """从JSON文件加载场景信息"""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             # 提取所需字段
             data['name'] = file_path.split(os.sep)[-2]
@@ -105,16 +105,28 @@ def get_scene_details(scene_name: str):
     full_path = os.path.join("src","envs", scene_name, "scene_info.json")
     scene_details = {}
     try:
-        with open(full_path, "r") as f:
+        with open(full_path, "r", encoding='utf-8') as f:
             scene_details = json.load(f)
 
-        with open(os.path.join("src","envs", scene_name, "actions.json"), "r") as f:
+        with open(
+            os.path.join("src", "envs", scene_name, "actions.json"),
+            "r",
+            encoding='utf-8',
+        ) as f:
             actions = json.load(f)
-        
-        with open(os.path.join("src","envs", scene_name, "events.json"), "r") as f:
+
+        with open(
+            os.path.join("src", "envs", scene_name, "events.json"),
+            "r",
+            encoding='utf-8',
+        ) as f:
             events = json.load(f)
-        
-        with open(os.path.join("src","envs", scene_name, "code", "code_structure.json"), "r") as f:
+
+        with open(
+            os.path.join("src", "envs", scene_name, "code", "code_structure.json"),
+            "r",
+            encoding='utf-8',
+        ) as f:
             code_structure = json.load(f)
             for agent_type, agent_data in code_structure.get("agents", {}).items():
                 for action_id, handler_data in agent_data.get("handlers", {}).items():
@@ -122,12 +134,12 @@ def get_scene_details(scene_name: str):
                         for action in actions[agent_type]:
                             if str(action.get("id")) == action_id:
                                 action["code"] = handler_data.get("code", "")
-    
+
             # 添加代码到事件
             for event_id, event_data in code_structure.get("events", {}).get("definitions", {}).items():
                 if event_id in events:
                     events[event_id]["code"] = event_data.get("code", "")
-                    
+
         scene_details["actions"] = actions
         scene_details["events"] = events
         if 'odd_protocol' in scene_details:
@@ -137,11 +149,11 @@ def get_scene_details(scene_name: str):
 
     except FileNotFoundError:
         return {}
-        #raise HTTPException(status_code=404, detail=f"在 {full_path} 未找到场景信息")
-        
+        # raise HTTPException(status_code=404, detail=f"在 {full_path} 未找到场景信息")
+
     except Exception as e:
         return {}
-        #raise HTTPException(status_code=500, detail=f"加载场景信息出错: {str(e)}")
+        # raise HTTPException(status_code=500, detail=f"加载场景信息出错: {str(e)}")
 
 @router.post("/check_scene_name", response_model=SceneNameCheckResponse)
 def check_scene_name(data: SceneNameCheck):

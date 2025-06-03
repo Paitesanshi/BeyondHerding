@@ -22,10 +22,10 @@ class MemoryManager:
         self.lock = RLock() if self.config.get('thread_safety') else None
 
     def load_config(self, config_file):
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             config = json.load(f)
         return config
-    
+
     def _initialize_strategy(self, config):
         try:
             strategy_name = self.config['strategy']
@@ -50,7 +50,7 @@ class MemoryManager:
                         raise ImportError(f"Cannot import {strategy_name} from 'onesim.memory.strategy': {e2}")
         except (ImportError, AttributeError) as e:
             raise ImportError(f"Cannot import {self.config['strategy']}: {e}")
-        
+
         strategy = strategy_class(self.config, model_config_name=self.config.get('model_config_name'))
         return strategy
 

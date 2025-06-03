@@ -20,7 +20,6 @@ router = APIRouter(
 )
 
 
-
 # 存储用户配置
 USER_CONFIGS = {}
 
@@ -36,7 +35,7 @@ def load_default_config():
     """加载默认配置"""
     try:
         if os.path.exists(DEFAULT_CONFIG_PATH):
-            with open(DEFAULT_CONFIG_PATH, 'r') as f:
+            with open(DEFAULT_CONFIG_PATH, 'r', encoding='utf-8') as f:
                 default_config = json.load(f)
                 logger.info(f"已加载默认配置: {DEFAULT_CONFIG_PATH}")
                 return default_config

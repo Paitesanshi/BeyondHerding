@@ -27,7 +27,7 @@ def get_scene_info_files():
 def load_scene_info(file_path):
     """Load scene info from file"""
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
         logger.error(f"Error loading scene info from {file_path}: {str(e)}")
@@ -86,12 +86,12 @@ def load_json(path: str) -> Dict[str, Any]:
 def save_scene_info(env_path: str, scene_info: dict, agent_types_with_descriptions: dict = None):
     """Save scene info to environment"""
     metadata_path = os.path.join(env_path, "metadata.json")
-    
+
     # Add agent types to scene info if provided
     if agent_types_with_descriptions:
         scene_info["agent_types"] = agent_types_with_descriptions
-    
-    with open(metadata_path, 'w') as f:
+
+    with open(metadata_path, 'w', encoding='utf-8') as f:
         json.dump(scene_info, f, indent=2)
-    
+
     return metadata_path 

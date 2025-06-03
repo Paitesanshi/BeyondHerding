@@ -25,7 +25,7 @@ def load_default_config():
                               "config", "config.json")
     try:
         if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
+            with open(config_path, 'r', encoding='utf-8') as f:
                 DEFAULT_CONFIG = json.load(f)
                 logger.info(f"从{config_path}加载默认配置")
         else:

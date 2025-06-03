@@ -571,7 +571,7 @@ async def async_main():
 def is_database_enabled(config_path):
     """Check if database is enabled in config file"""
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
 
         # Check if database section is directly in config (older format)
@@ -585,7 +585,7 @@ def is_database_enabled(config_path):
 def is_distribution_enabled(config_path):
     """Check if distribution is enabled in config file"""
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
         return config.get("distribution", {}).get("enabled", False)
     except Exception:
