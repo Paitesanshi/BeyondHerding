@@ -185,26 +185,26 @@ async def initialize_distributed_environment(config: OneSimConfig, args):
 async def initialize_environment(config: OneSimConfig, args) -> Optional[BasicSimEnv]:
     """Initialize simulation environment"""
     registry = get_component_registry()
-    
+
     # Get node if we're in distributed mode
     node = registry.get_instance(COMPONENT_DISTRIBUTION)
     node_role = node.role if node else NodeRole.SINGLE
-    
+
     # Create or get event bus
     event_bus = get_event_bus()
-    
+
     # Create Agent Factory and Agents
     logger.info("Creating agents for environment")
     agents, agent_factory = await init_agents(config)
-    
+
     # Build workflow graph and get start/end nodes
     logger.info("Building workflow graph")
     work_graph, start_agent_ids, end_agent_ids = build_graph(config, agent_factory)
-    
+
     # Load and create environment
     logger.info(f"Loading environment class from {config.env_path}")
     SimEnv = load_sim_env_from_file(os.path.join(config.base_dir, "envs"), config.env_name)
-    
+
     # Initialize trail for data storage (only on master or single node)
     trail_id = None
     if node_role != NodeRole.WORKER and registry.is_initialized(COMPONENT_DATABASE):
@@ -214,7 +214,7 @@ async def initialize_environment(config: OneSimConfig, args) -> Optional[BasicSi
             scenario_mgr = ScenarioManager()
             env_config = config.simulator_config.environment
             env_name = env_config.get('name', config.env_name)
-            
+
             # Create or get scenario ID
             try:
                 # Try to find existing scenario
@@ -241,7 +241,7 @@ async def initialize_environment(config: OneSimConfig, args) -> Optional[BasicSi
             except Exception as e:
                 logger.warning(f"Error finding/creating scenario: {e}, generating temporary ID")
                 scenario_id = str(uuid.uuid4())
-            
+
             # Create trail
             trail_mgr = TrailManager()
             trail_name = f"{env_name}_run_{time.strftime('%Y%m%d_%H%M%S')}"
@@ -254,12 +254,12 @@ async def initialize_environment(config: OneSimConfig, args) -> Optional[BasicSi
             logger.info(f"Created trail {trail_id} for data storage")
         except Exception as e:
             logger.error(f"Error initializing data storage: {e}, continuing without storage")
-    
+
     # Create environment instance
     logger.info("Creating environment instance")
     # Use the environment settings from simulator_config
     env_settings = config.simulator_config.environment
-    
+
     sim_env = SimEnv(
         config.env_name, 
         event_bus, 
@@ -271,17 +271,17 @@ async def initialize_environment(config: OneSimConfig, args) -> Optional[BasicSi
         config.env_path,
         trail_id  # Pass trail_id to environment
     )
-    
+
     # Register termination events
     end_events = work_graph.get_end_events()
     for event_name in end_events:
         logger.info(f"Registering termination event: {event_name}")
         sim_env.register_event(event_name, 'terminate')
-    
+
     # Register environment with event bus
     if node_role == NodeRole.MASTER or node_role == NodeRole.SINGLE:
         event_bus.register_agent("ENV", sim_env)
-        
+
         # Set environment reference in master node for data forwarding from workers
         if node_role == NodeRole.MASTER and node:
             # Provide sim_env to master node for data forwarding from workers
@@ -292,20 +292,13 @@ async def initialize_environment(config: OneSimConfig, args) -> Optional[BasicSi
             for agent_type in agents:
                 for agent_id, agent in agents[agent_type].items():
                     agent.set_env(sim_env)
-                    
+
         for agent_type in agents:
             for agent_id, agent in agents[agent_type].items():
                 event_bus.register_agent(agent_id, agent)
-    
+
     logger.info(f"Environment '{config.env_name}' initialized successfully")
-    
-    # After sim_env is created
-    # if config.monitor_config.enabled:
-    #     from onesim.monitor import MonitorManager
-    #     await MonitorManager.setup_metrics(
-    #         env=sim_env
-    #     )
-    
+
     return sim_env
 
 async def run_simulation(
@@ -316,33 +309,45 @@ async def run_simulation(
     """Coordinate running all simulation components."""
     try:
         registry = get_component_registry()
-        
+
         # Get node if in distributed mode
         node = registry.get_instance(COMPONENT_DISTRIBUTION)
         node_role = node.role if node else NodeRole.SINGLE
-        
+
         # Get event bus
         event_bus = get_event_bus()
-        
+
         # Create a termination event
         termination_event = asyncio.Event()
-        
+
         # Register signal handlers for graceful shutdown
         import signal
-        
+
         def signal_handler():
             logger.info("Received interrupt signal, initiating graceful shutdown")
             termination_event.set()
-            
-        # Add signal handlers for interrupts
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            asyncio.get_event_loop().add_signal_handler(sig, signal_handler)
-        
+
+        try:
+            if sys.platform.startswith('win'):
+                # Windows: use traditional signal handling
+                signal.signal(signal.SIGINT, signal_handler)
+            else:
+                # Unix/Linux/macOS: try asyncio first, fallback to traditional
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.add_signal_handler(signal.SIGINT, signal_handler)
+                    loop.add_signal_handler(signal.SIGTERM, signal_handler)
+                except (NotImplementedError, RuntimeError):
+                    signal.signal(signal.SIGINT, signal_handler)
+                    signal.signal(signal.SIGTERM, signal_handler)
+        except Exception as e:
+            logger.warning(f"Signal handler setup failed: {e}")
+
         if node_role == NodeRole.MASTER or node_role == NodeRole.SINGLE:
             if not sim_env:
                 logger.error("Simulation environment is required for Master node")
                 return
-                
+
             logger.info(f"{node_role.name} node starting simulation with environment")
 
             if config.monitor_config.enabled:
@@ -353,7 +358,7 @@ async def run_simulation(
 
             # Get environment tasks
             env_tasks = await sim_env.run()
-            
+
             # If single mode, create agent tasks
             agent_tasks = []
             if node_role == NodeRole.SINGLE:
@@ -362,22 +367,22 @@ async def run_simulation(
                 for agent_type in agents:
                     for agent_id, agent in agents[agent_type].items():
                         agent_tasks.append(agent.run())
-                
+
                 # Run all tasks with termination handling
                 event_bus_task = asyncio.create_task(event_bus.run())
                 all_tasks = [event_bus_task] + agent_tasks + env_tasks
-                
+
                 # Wait for either tasks to complete or termination signal
                 done, pending = await asyncio.wait(
                     [asyncio.create_task(termination_event.wait())] + all_tasks,
                     return_when=asyncio.FIRST_COMPLETED
                 )
-                
+
                 # Check if termination was requested
                 if any(t for t in done if termination_event.is_set()):
                     logger.info("Manual termination requested")
                     await sim_env.stop_simulation()
-                
+
                 # Ensure cleanup of remaining tasks
                 for task in pending:
                     if not task.done():
@@ -385,14 +390,14 @@ async def run_simulation(
             else:
                 # Master mode - run event bus and environment tasks separately
                 event_bus_task = asyncio.create_task(event_bus.run())
-                
+
                 try:
                     # Wait for either env tasks to complete or termination signal
                     done, pending = await asyncio.wait(
                         [asyncio.create_task(termination_event.wait())] + env_tasks,
                         return_when=asyncio.FIRST_COMPLETED
                     )
-                    
+
                     # Check if termination was requested
                     if any(t for t in done if termination_event.is_set()):
                         logger.info("Manual termination requested")
@@ -405,48 +410,48 @@ async def run_simulation(
                             await event_bus_task
                         except asyncio.CancelledError:
                             pass
-                
+
         elif node_role == NodeRole.WORKER:
             logger.info("Worker node starting event processing")
             agents = node.agents if node else {}
             agent_tasks = []
-            
+
             # Set the ProxyEnv reference for all agents on this worker
             if hasattr(node, 'proxy_env') and node.proxy_env and agents:
                 logger.info(f"Setting proxy environment for {sum(len(agents[t]) for t in agents)} agents")
                 for agent_type in agents:
                     for agent_id, agent in agents[agent_type].items():
                         agent.set_env(node.proxy_env)
-            
+
             # Create agent tasks
             for agent_type in agents:
                 for agent_id, agent in agents[agent_type].items():
                     agent_tasks.append(agent.run())
-                    
+
             # Get proxy environment tasks
             env_tasks = []
             if hasattr(node, 'proxy_env') and node.proxy_env:
                 env_tasks = await node.proxy_env.run()
-                    
+
             # Worker needs to run event bus, proxy env, and agent tasks
             if agent_tasks or env_tasks:
                 event_bus_task = asyncio.create_task(event_bus.run())
                 all_tasks = [event_bus_task] + agent_tasks + env_tasks
-                
+
                 # Wait for either tasks to complete or termination signal
                 done, pending = await asyncio.wait(
                     [asyncio.create_task(termination_event.wait())] + all_tasks,
                     return_when=asyncio.FIRST_COMPLETED
                 )
-                
+
                 # If termination was requested or event bus stopped, cancel remaining tasks
                 if termination_event.is_set():
                     logger.info("Worker node termination requested")
-                    
+
                     # Stop simulation through proxy environment if available
                     if hasattr(node, 'proxy_env') and node.proxy_env:
                         await node.proxy_env.stop_simulation()
-                
+
                 for task in pending:
                     if not task.done():
                         task.cancel()
@@ -455,7 +460,7 @@ async def run_simulation(
                 await event_bus.run()
         else:
             logger.error(f"Unknown node role: {node_role}")
-            
+
     except asyncio.CancelledError:
         logger.info("Simulation cancelled")
         # Ensure simulation is stopped if it was running
@@ -568,15 +573,15 @@ def is_database_enabled(config_path):
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
-        
+
         # Check if database section is directly in config (older format)
         if "database" in config:
             return config.get("database", {}).get("enabled", False)
-            
+
         return False
     except Exception:
         return False
-        
+
 def is_distribution_enabled(config_path):
     """Check if distribution is enabled in config file"""
     try:
