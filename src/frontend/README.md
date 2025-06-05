@@ -20,7 +20,9 @@ AI Behavior Sim is a Vue.js-based application that allows users to:
 
 ### Installation
 
-```bash
+```bash 
+cd src/frontend
+
 # Install dependencies
 npm install
 # or 

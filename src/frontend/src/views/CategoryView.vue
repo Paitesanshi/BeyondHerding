@@ -13,7 +13,7 @@
         <span>{{ subcategory }}</span>
 
         <div class="button-area">
-          <button class="modify-btn" @click="showModifyAlert">
+          <button class="modify-btn" @click="handleModifyClick">
             <i class="fa fa-edit"></i> Modify
           </button>
           <button class="next-btn" @click="showNextStepAlert">
@@ -37,11 +37,28 @@
         </div>
       </div>
     </div>
+
+    <el-dialog v-model="showModelDialog" title="Please select the model." width="400px">
+      <el-select v-model="tempSelectedModel" placeholder="Please select the model." style="width: 100%;">
+        <el-option
+          v-for="item in models"
+          :key="item.value"
+          :label="item.name"
+          :value="item.value"
+        />
+      </el-select>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showModelDialog = false">Cancel</el-button>
+          <el-button type="primary" @click="handleModelDialogConfirm">OK</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, h } from "vue";
 import { useRouter } from "vue-router";
 import Sidebar from "../components/Sidebar.vue";
 import TopologyGraph from "../components/TopologyGraph.vue";
@@ -152,36 +169,31 @@ const getSubcategoryData = (categoryData) => {
   return categoryData.subcategories[props.subcategory];
 };
 
-const showModifyAlert = () => {
-
-  const scenarioName = props.subcategory;
-
-
-  ElMessageBox.confirm("Modify?", {
-    confirmButtonText: "OK",
-    cancelButtonText: "Cancel",
+const showModelDialog = ref(false);
+const tempSelectedModel = ref("");
+const handleModifyClick = () => {
+  tempSelectedModel.value = selectedModel.value || (models.value[0] && models.value[0].value) || '';
+  showModelDialog.value = true;
+};
+const handleModelDialogConfirm = () => {
+  if (!tempSelectedModel.value) {
+    ElMessage.warning('请选择模型');
+    return;
+  }
+  selectedModel.value = tempSelectedModel.value;
+  localStorage.setItem("scenarioName", props.subcategory);
+  axios.post("/api/pipeline/initialize", {
+    env_name: props.subcategory,
+    category: "chat",
+    model_name: selectedModel.value,
   }).then(() => {
-   
-  localStorage.setItem("scenarioName", scenarioName);
-
-    axios
-      .post("/api/pipeline/initialize", {
-        // "session_id": localStorage.getItem('sessionId'),
-        env_name: scenarioName,
-        category: "chat", //暂时
-        model_name: "gpt-4o", //暂时
-      })
-      .then((response) => {
-        // this.loadAgentTypes();
-        localStorage.setItem("sessionId", "");
-        router.push({
-          path: "/simulation",
-          query: {
-            step: 2,
-          },
-        });
-      });
+    localStorage.setItem("sessionId", "");
+    router.push({
+      path: "/simulation",
+      query: { step: 2 },
+    });
   });
+  showModelDialog.value = false;
 };
 
 const showNextStepAlert = () => {
@@ -251,6 +263,46 @@ const strToJson = (str) => {
   }
 };
 
+/**获取模型列表 */
+const modelItem = ref({});
+const models = ref([]);
+const selectedModel = ref('');
+const fetchModels = () => {
+  axios
+  .get("/api/config/models",{
+    params: {
+      category: "chat"
+    }
+  }).then((response) => {
+    for (let i in response.data.models) {
+      for (let j in response.data.models[i]) {
+        let item = response.data.models[i][j];
+        models.value.push({
+          value: item,
+          name: item,
+          category: i,
+        });
+      }
+    }
+    // 如果models不为空，设置第一个模型为默认选择
+    if (models.value.length > 0) {
+      selectedModel.value = models.value[0].value;
+      handleModelChange();
+    }
+  }).catch((error) => {
+    console.error("获取模型列表失败:", error);
+  });
+}
+/**模型选择（如果models不为空，设置第一个模型为默认选择） */
+const handleModelChange = () => {
+  modelItem.value = {};
+  for (let i in models.value) {
+    if (selectedModel.value == models.value[i].value) {
+      modelItem.value = models.value[i];
+    }
+  }
+}
+
 watch(
   () => props.category,
   (newVal, oldVal) => {
@@ -263,6 +315,8 @@ watch(
 
 onMounted(() => {
   loadData();
+  //获取模型列表
+  fetchModels();
 });
 </script>
 
@@ -480,5 +534,18 @@ onMounted(() => {
 
 :deep(.markdown-content ol) {
   list-style-type: decimal;
+}
+
+:deep(.el-select .el-select__wrapper) {
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 0 0 var(--el-border-color) inset !important;
+}
+
+:deep(.el-dialog__header) {
+  border-bottom: 0px solid #eee !important;
+}
+
+:deep(.el-dialog__footer) {
+  border-top: 0px solid #eee !important;
 }
 </style>
