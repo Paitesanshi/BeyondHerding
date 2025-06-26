@@ -10,7 +10,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2505.07581-b31b1b.svg)](https://arxiv.org/abs/2505.07581)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Docs](https://img.shields.io/badge/Docs-online-brightgreen.svg)](https://ruc-gsai.github.io/YuLan-OneSim/)
 [![Stars](https://img.shields.io/github/stars/RUC-GSAI/YuLan-OneSim)](https://github.com/RUC-GSAI/YuLan-OneSim/stargazers)
 
 
@@ -46,24 +46,74 @@ YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages
 ## 🎥 Demo Video
 
 <div align="center">
-  <img src="assets/thumbnail.png" alt="YuLan-OneSim Demo Video" width="600"/>
-  
-  <p>
-    <strong>📺 Watch Demo Video:</strong><br/>
-  <a href="https://youtu.be/NUxZQleeEIc" target="_blank">中文版 </a> | 
-  <a href="https://youtu.be/GSW2A76FIyw" target="_blank">English Version</a>
-  </p>
+  <a href="https://youtu.be/NUxZQleeEIc" target="_blank">
+    <img src="assets/thumbnail.png" alt="Watch the demo video" />
+  </a>
+  <p><strong>👆 Click the image above to watch the demo video</strong></p>
 </div>
 
 ## 🛠️ Installation
 
+You can install YuLan-OneSim either using Docker (recommended for quick setup) or from source for development.
+
+### 🐳 Docker Installation (Recommended)
+
+We provide a Docker image for easy deployment and a `Makefile` to simplify common commands.
+
+**Prerequisites:**
+- [Docker](https://www.docker.com/products/docker-desktop) installed on your system.
+
+**Steps:**
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/RUC-GSAI/YuLan-OneSim
+    cd YuLan-OneSim
+    ```
+
+2.  **Configure your settings:**
+    Before starting, make sure to set up your API keys and other settings in `config/config.json` and `config/model_config.json`. Refer to the [Configuration](#-configuration) section for details.
+
+3.  **Run with Makefile (Easiest):**
+    The `Makefile` provides simple commands to manage the container.
+    ```bash
+    make run
+    ```
+    Once running, access the application:
+    - Web UI: [http://localhost:8000](http://localhost:8000)
+
+    **Other useful `make` commands:**
+    - `make build`: Build the Docker image.
+    - `make run`: Start the container.
+    - `make stop`: Stop and remove the container.
+    - `make logs`: Follow container logs.
+    - `make shell`: Enter the container's shell.
+    - `make clean`: Stop the container and remove the image.
+
+4.  **Run with Docker Commands:**
+    If you prefer not to use `make`, you can use `docker` commands directly.
+    ```bash
+    # Pull the pre-built image from Docker Hub
+    docker pull ptss/yulan-onesim:latest
+
+    # Or build it from source
+    # docker build -t ptss/yulan-onesim:latest .
+
+    # Run the container
+    docker run -d --name yulan-onesim -p 8000:80 -v ./config:/app/config ptss/yulan-onesim:latest
+    ```
+
+### 📦 Installation from Source
+
 ```bash
-# Clone the repository
+# Clone the repository (if you haven't already)
 git clone https://github.com/RUC-GSAI/YuLan-OneSim
 cd YuLan-OneSim
 
-pip install -e .  # Install in editable mode
-pip install -e .[tune]  # Install with tuning dependencies if needed
+# Install in editable mode
+pip install -e .
+# Install with tuning dependencies if needed
+pip install -e .[tune]
 ```
 
 ## 🚀 Quick Start
@@ -200,8 +250,8 @@ Specifies the LLMs and embedding models used by the simulator:
   ],
   "embedding": [
     {
-      "model_type": "openai_embedding",         // Embedding model type
-      "config_name": "openai_embedding-bert",   // Configuration identifier
+      "provider": "vllm",         // Embedding model type
+      "config_name": "vllm_embedding-bert",   // Configuration identifier
       "model_name": "bge-base-en-v1.5",         // Embedding model name or path
       "client_args": {
         "base_url": "http://localhost:9890/v1/" // Local API endpoint

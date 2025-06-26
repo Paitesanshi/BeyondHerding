@@ -266,6 +266,7 @@ class ModelManager:
             ValueError: If the provider is unknown.
         """
         # Map model providers to import paths and class names
+        # FEAT: add ark, deepseek, aliyun, tencent
         model_registry = {
             "openai": {
                 "chat": ("onesim.models.providers.openai", "OpenAIChatAdapter"),
@@ -274,7 +275,23 @@ class ModelManager:
             "vllm": {
                 "chat": ("onesim.models.providers.vllm", "VLLMChatAdapter"),
                 "embedding": ("onesim.models.providers.vllm", "VLLMEmbeddingAdapter")
-            }
+            },
+            "ark": {
+                "chat":      ("onesim.models.providers.ark",         "ArkChatAdapter"),
+                "embedding": ("onesim.models.providers.ark",         "ArkEmbeddingAdapter"),
+            },
+            "deepseek": {
+                "chat":      ("onesim.models.providers.deepseek",         "DeepSeekChatAdapter"),
+                "embedding": ("onesim.models.providers.deepseek",         "DeepSeekEmbeddingAdapter"),
+            },
+            "aliyun": {
+                "chat":      ("onesim.models.providers.aliyun",         "AliyunChatAdapter"),
+                "embedding": ("onesim.models.providers.aliyun",         "AliyunEmbeddingAdapter"),
+            },
+            "tencent": {
+                "chat":      ("onesim.models.providers.tencent",         "TencentChatAdapter"),
+                "embedding": ("onesim.models.providers.tencent",         "TencentEmbeddingAdapter"),
+            },
             # Add additional providers as needed
         }
         
@@ -284,6 +301,30 @@ class ModelManager:
             category = "chat"
         elif provider == "openai_embedding":
             provider = "openai"
+            category = "embedding"
+        elif provider == "ark_chat":
+            provider = "ark"
+            category = "chat"
+        elif provider == "ark_embedding":
+            provider = "ark"
+            category = "embedding"
+        elif provider == "deepseek_chat":
+            provider = "deepseek"
+            category = "chat"
+        elif provider == "deepseek_embedding":
+            provider = "deepseek"
+            category = "embedding"
+        elif provider == "aliyun_chat":
+            provider = "aliyun"
+            category = "chat"
+        elif provider == "aliyun_embedding":
+            provider = "aliyun"
+            category = "embedding"
+        elif provider == "tencent_chat":
+            provider = "tencent"
+            category = "chat"
+        elif provider == "tencent_embedding":
+            provider = "tencent"
             category = "embedding"
             
         # Check if the provider exists in our registry

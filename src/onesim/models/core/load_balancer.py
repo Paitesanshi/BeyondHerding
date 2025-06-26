@@ -307,6 +307,23 @@ class LoadBalancer(ModelAdapterBase):
         
         # If we get here, all models failed
         raise Exception(f"All models failed after {self.max_retries} attempts. Last error: {str(last_error)}")
+    # FEAT: add list_models and alist_models
+    def list_models(self) -> List[str]:
+        """
+        Sync: return the list of backend model IDs this load-balancer can route to.
+        """
+        # make sure the model instances are initialized
+        if not self._model_instances:
+            self.initialize_models()
+        # return the model_name of each adapter
+        return [m.model_name for m in self._model_instances]
+
+    async def alist_models(self) -> List[str]:
+        """
+        Async: same as list_models, but async signature.
+        """
+        # directly reuse the sync method
+        return self.list_models()
     
     def format(self, *args: Union[Message, Sequence[Message]]) -> Any:
         """

@@ -145,6 +145,28 @@ class ModelAdapterBase(ABC):
         )
     
     @abstractmethod
+    def list_models(self) -> List[str]:
+        """
+        Synchronously return the list of available model IDs
+        from this adapter’s backend.
+
+        Returns:
+            A list of model identifier strings.
+        """
+        pass
+
+    @abstractmethod
+    async def alist_models(self) -> List[str]:
+        """
+        Asynchronously return the list of available model IDs
+        from this adapter’s backend.
+
+        Returns:
+            A list of model identifier strings.
+        """
+        pass
+        
+    @abstractmethod
     def format(self, *args: Union[Message, Sequence[Message]]) -> Any:
         """
         Format input messages into the structure expected by the model.

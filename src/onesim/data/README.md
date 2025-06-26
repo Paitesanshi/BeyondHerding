@@ -32,7 +32,7 @@ brew install postgresql
 ### 2. Install Python Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 3. Configure OneSim

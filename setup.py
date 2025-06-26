@@ -19,7 +19,7 @@ required_packages = [
     "seaborn>=0.13.2",
     "setuptools>=75.6.0",
     "tqdm>=4.67.1",
-    "uvicorn>=0.34.2",
+    "uvicorn[standard]>=0.34.2",
     "faiss-cpu>=1.9.0",
     "pyyaml",
     "openai",
@@ -28,11 +28,11 @@ required_packages = [
 # Optional dependencies for tuning
 tune_extras = [
     "mlflow",
-    "torch==2.6.0",
+    "torch",
     "peft>=0.15.1",
-    "transformers>=4.51.1",
+    "transformers",
     "trl>=0.16.0",
-    "vllm>=0.8.4",
+    "vllm",
 ]
 
 setup(
@@ -51,10 +51,8 @@ setup(
     package_dir={'': 'src'},
     include_package_data=True,
     install_requires=required_packages,
-    extras_require={
-        'tune': tune_extras
-    },
-    python_requires='>=3.10',
+    extras_require={'tune': tune_extras},
+    python_requires='>=3.10,<3.11',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -62,7 +60,6 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Sociology',
     ],

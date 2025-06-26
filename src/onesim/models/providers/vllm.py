@@ -295,7 +295,20 @@ class VLLMChatAdapter(ModelAdapterBase):
         except Exception as e:
             logger.error(f"Error calling vLLM API asynchronously: {str(e)}") # Changed log message
             raise
-    
+            
+    def list_models(self) -> List[str]:
+        """
+        vLLM endpoint doesn’t support /v1/models, so we just
+        return the configured model name.
+        """
+        return [self.model_name]
+
+    async def alist_models(self) -> List[str]:
+        """
+        Async version: same fallback to single model name.
+        """
+        return [self.model_name]
+        
     def _validate_messages(self, messages: List[Dict]) -> None:
         """Validate that the messages have the required format."""
         if not isinstance(messages, list):

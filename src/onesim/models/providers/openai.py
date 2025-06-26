@@ -60,11 +60,14 @@ class OpenAIChatAdapter(ModelAdapterBase):
             raise ImportError(
                 "OpenAI package not found. Please install it using: pip install openai"
             )
-        
+        # FEAT:fixed API address
+        default_base_url = "https://api.openai.com/v1/"
+        client_args.setdefault("base_url", default_base_url)
+        client_args = client_args or {}
         self.client = openai.OpenAI(
             api_key=api_key,
             organization=organization,
-            **(client_args or {})
+            **client_args
         )
         
         # Initialize the OpenAI async client
@@ -79,7 +82,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
             self.async_client = AsyncOpenAI(
                 api_key=api_key,
                 organization=organization,
-                **(client_args or {})
+                **client_args
             )
     
     def __call__(
@@ -276,6 +279,47 @@ class OpenAIChatAdapter(ModelAdapterBase):
                 
         except Exception as e:
             logger.error(f"Error calling OpenAI API asynchronously: {str(e)}")
+            raise
+
+    def list_models(self) -> List[str]:
+        """
+        Synchronously retrieve the list of available model IDs
+        from the OpenAI-compatible endpoint.
+        
+        Returns:
+            A list of model identifier strings, e.g. ["gpt-4", "gpt-3.5-turbo", …].
+        """
+        try:
+            response = self.client.models.list()
+            data = response.model_dump()
+            # Extract the 'id' field from each model entry
+            return [entry["id"] for entry in data.get("data", [])]
+        except Exception as e:
+            logger.error(f"Failed to list models: {e}")
+            raise
+
+    async def alist_models(self) -> List[str]:
+        """
+        Asynchronously retrieve the list of available model IDs
+        from the OpenAI-compatible endpoint.
+        
+        Returns:
+            A list of model identifier strings.
+        """
+        try:
+            if self.async_client:
+                response = await self.async_client.models.list()
+            else:
+                # Fallback to running the sync call in a thread pool
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.models.list()
+                )
+            data = response.model_dump()
+            return [entry["id"] for entry in data.get("data", [])]
+        except Exception as e:
+            logger.error(f"Failed to asynchronously list models: {e}")
             raise
     
     def _validate_messages(self, messages: List[Dict]) -> None:
@@ -558,7 +602,7 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
         self.client = openai.OpenAI(
             api_key=api_key,
             organization=organization,
-            **(client_args or {})
+            **client_args
         )
         
         # Initialize the OpenAI async client
@@ -673,7 +717,48 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
         except Exception as e:
             logger.error(f"Error calling OpenAI Embedding API asynchronously: {str(e)}")
             raise
-    
+        
+    def list_models(self) -> List[str]:
+        """
+        Synchronously retrieve the list of available model IDs
+        from the OpenAI-compatible endpoint.
+        
+        Returns:
+            A list of model identifier strings, e.g. ["gpt-4", "gpt-3.5-turbo", …].
+        """
+        try:
+            response = self.client.models.list()
+            data = response.model_dump()
+            # Extract the 'id' field from each model entry
+            return [entry["id"] for entry in data.get("data", [])]
+        except Exception as e:
+            logger.error(f"Failed to list models: {e}")
+            raise
+
+    async def alist_models(self) -> List[str]:
+        """
+        Asynchronously retrieve the list of available model IDs
+        from the OpenAI-compatible endpoint.
+        
+        Returns:
+            A list of model identifier strings.
+        """
+        try:
+            if self.async_client:
+                response = await self.async_client.models.list()
+            else:
+                # Fallback to running the sync call in a thread pool
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.models.list()
+                )
+            data = response.model_dump()
+            return [entry["id"] for entry in data.get("data", [])]
+        except Exception as e:
+            logger.error(f"Failed to asynchronously list models: {e}")
+            raise
+
     def format(self, *args: Union[str, Message, Sequence[Union[str, Message]]]) -> List[str]:
         """
         Format inputs for the OpenAI embedding API.

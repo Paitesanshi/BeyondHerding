@@ -25,8 +25,8 @@
     ],
     "embedding": [
         {
-            "model_type": "openai_embedding",
-            "config_name": "openai_embedding-bert",
+            "provider": "vllm",
+            "config_name": "vllm-embedding-bert",
             "model_name": "bge-base-en-v1.5",
             "api_key": "sk-xxx",
             "client_args": {
