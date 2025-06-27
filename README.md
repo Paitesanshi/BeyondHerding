@@ -19,6 +19,7 @@
 </div>
 
 ## 📰 News
+- **[2025-6-27]** 📢 Our documentation is now available at [YuLan-OneSim Docs](https://ruc-gsai.github.io/YuLan-OneSim/), and the Docker image can be accessed at [Docker Hub](https://hub.docker.com/repository/docker/ptss/yulan-onesim/general).
 - **[2025-5-13]** 🎉 Initial release of YuLan-OneSim! Our paper is now available on [arXiv](https://arxiv.org/abs/2505.07581).
 
 ## 📋 Overview
