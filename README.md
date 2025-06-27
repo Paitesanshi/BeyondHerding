@@ -46,10 +46,13 @@ YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages
 ## 🎥 Demo Video
 
 <div align="center">
-  <a href="https://youtu.be/NUxZQleeEIc" target="_blank">
-    <img src="assets/thumbnail.png" alt="Watch the demo video" />
-  </a>
-  <p><strong>👆 Click the image above to watch the demo video</strong></p>
+  <img src="assets/thumbnail.png" alt="YuLan-OneSim Demo Video" width="600"/>
+  
+  <p>
+    <strong>📺 Watch Demo Video:</strong><br/>
+  <a href="https://youtu.be/NUxZQleeEIc" target="_blank">中文版 </a> | 
+  <a href="https://youtu.be/GSW2A76FIyw" target="_blank">English Version</a>
+  </p>
 </div>
 
 ## 🛠️ Installation

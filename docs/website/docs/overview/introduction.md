@@ -5,7 +5,7 @@ title: What is YuLan-OneSim
 
 # What is YuLan-OneSim
 
-YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages Large Language Model (LLM) agents to model human social behaviors. Our framework bridges the gap between social science and artificial intelligence by offering a powerful, 易用 platform for research and exploration.  
+YuLan-OneSim (玉兰-万象) is a groundbreaking social simulator that leverages Large Language Model (LLM) agents to model human social behaviors. Our framework bridges the gap between social science and artificial intelligence by offering a powerful, user-friendly platform for research and exploration.  
 <br/>
 ![Yulan-Onesim](../../static/img/logo.gif)
 

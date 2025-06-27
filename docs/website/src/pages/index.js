@@ -95,7 +95,7 @@ function SimulationDashboard() {
 					{/* 视频展示区 */}
 					<div className="simulation-display">
 						<video
-							src="/img/homepage/simulation.mp4"
+							src="/YuLan-OneSim/img/homepage/simulation.mp4"
 							autoPlay
 							loop
 							muted
@@ -192,15 +192,15 @@ export default function Home() {
 									<span>🚀 Next Generation Social Simulator</span>
 								</div>
 								<h1 className="hero-title">
-									<img src="/img/logo.png" alt="YuLan Flower" className="hero-logo" />
+									<img src="/YuLan-OneSim/img/logo.png" alt="YuLan Flower" className="hero-logo" />
 									<span className="gradient-text">YuLan-OneSim</span>
 								</h1>
 								<p className="hero-subtitle">
 									A Next Generation Social Simulator with Large Language Models
 								</p>
 								<p className="hero-description">
-									Bridge the gap between social science and AI with our powerful, user-friendly platform 
-									for research and exploration using LLM agents to model human social behaviors.
+								Reimagining Social Science with Generative Intelligence. 
+								Leverage powerful LLM agents to model human behavior, explore social dynamics, and advance social science research with user-friendly simulation platform. 
 								</p>
 								<div className="hero-buttons">
 									<a className="button-primary" href="/docs/getting-started/requirements">
@@ -257,7 +257,7 @@ export default function Home() {
 									<span>🔄</span>
 									<h3>Code-free scenario construction</h3>
 								</div>
-								<p>Design complex simulations through natural language conversations without writing any code.</p>
+								<p>Design complex simulations through natural language conversations.</p>
 							</div>
 						</div>
 						<div className="feature-card">
@@ -266,7 +266,7 @@ export default function Home() {
 									<span>📚</span>
 									<h3>Comprehensive default scenarios</h3>
 								</div>
-								<p>50+ default scenarios across 8 major social science domains ready to use out of the box.</p>
+								<p>Provide 50+ default scenarios across 8 major social science domains.</p>
 							</div>
 						</div>
 						<div className="feature-card">
@@ -275,7 +275,7 @@ export default function Home() {
 									<span>🧠</span>
 									<h3>Evolvable simulation</h3>
 								</div>
-								<p>Models that automatically improve based on external feedback and learning mechanisms.</p>
+								<p>Allow automatic LLM updates based on human or machine feedback.</p>
 							</div>
 						</div>
 						<div className="feature-card">
@@ -284,7 +284,7 @@ export default function Home() {
 									<span>🚀</span>
 									<h3>Large-scale simulation</h3>
 								</div>
-								<p>Distributed architecture supporting up to 100,000 agents for massive social simulations.</p>
+								<p>Distributed architecture supporting up to 100,000 agents.</p>
 							</div>
 						</div>
 						<div className="feature-card">
@@ -315,25 +315,28 @@ export default function Home() {
 					<div className="section-header">
 						<h2 className="section-title">
 							<span className="section-emoji">🎮</span>
-							Frontend Demo
+							Platform Demo
 						</h2>
 						<p className="section-subtitle">
-							Experience our user-friendly web interface for easy configuration and social simulation management
+							Watch a comprehensive introduction to YuLan-OneSim's powerful features and user-friendly interface.
 						</p>
 					</div>
-					<div className="demo-content">
-						<div 
-							className="demo-video-wrapper" 
-							onClick={() => window.open('https://www.youtube.com/watch?v=GSW2A76FIyw', '_blank')}
-							style={{ cursor: 'pointer' }}
-						>
-							<img src="/img/homepage/simulation.gif" alt="Frontend Demo" className="demo-image" />
-							<div className="demo-overlay">
-								<div className="play-button">
-									<span>▶️</span>
-								</div>
-							</div>
+					<div className="demo-content" style={{ display: 'flex', justifyContent: 'center' }}>
+						<div className="demo-video-wrapper" style={{ width: '100%', maxWidth: '880px' }}>
+							<iframe
+								style={{
+									width: '100%',
+									aspectRatio: '16/9',
+									border: 'none',
+									borderRadius: '12px',
+								}}
+								src="https://www.youtube.com/embed/GSW2A76FIyw"
+								title="YuLan-OneSim Platform Demo"
+								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+								allowFullScreen
+							></iframe>
 						</div>
+						{/*
 						<div className="demo-features">
 							<div className="demo-feature">
 								<div className="demo-feature-content">
@@ -363,6 +366,7 @@ export default function Home() {
 								</div>
 							</div>
 						</div>
+						*/}
 					</div>
 				</div>
 			</section>

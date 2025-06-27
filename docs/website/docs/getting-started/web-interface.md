@@ -1,6 +1,6 @@
 ---
 sidebar_position: 5
-title: Web Interface Introduction
+title: web_interface_introduction
 ---
 
 # Web Interface Introduction
@@ -13,7 +13,7 @@ This guide provides an overview of the YuLan-OneSim frontend interface features 
 
 When you launch the web UI, you land on the starting page for all simulations. Here, you can describe a new scenario using natural language or select a pre-built one.
 
-![Start](<../../static/img/docs/Web Interface Introduction/Start.png>)
+![Start](<../../static/img/docs/web_interface_introduction/Start.png>)
 
 -   **Prompt Input**: This is where you compose and submit your scenario description.
 -   **Model Selection**: Choose the large language model (LLM) you want to use for generating the scenario's code and logic.
@@ -22,20 +22,20 @@ When you launch the web UI, you land on the starting page for all simulations. H
 
 The collapsible sidebar on the left contains thematic domains (e.g., Economics, Sociology). Selecting a category can load relevant scenario templates or pre-fill prompts to help you get started.
 
-![Domain Sidebar](<../../static/img/docs/Web Interface Introduction/Start3.png>)
+![Domain Sidebar](<../../static/img/docs/web_interface_introduction/Start3.png>)
 
 
 ### 2. Settings
 
 On the settings page, you can choose the strategies and models for the simulation run itself. Once configured, click "Save Settings" and "Start" to begin the simulation.
 
-![Settings](<../../static/img/docs/Web Interface Introduction/Settings.png>)
+![Settings](<../../static/img/docs/web_interface_introduction/Settings.png>)
 
 ### 3. Simulation Runtime & Map View
 
 Once the simulation starts, you are presented with an interactive dashboard.
 
-![Simulation](<../../static/img/docs/Web Interface Introduction/Simulation.png>)
+![Simulation](<../../static/img/docs/web_interface_introduction/Simulation.png>)
 
 #### City Map Visualization
 
@@ -43,7 +43,7 @@ The central part of the screen features a colorful, grid-based map. It displays 
 
 
 #### Simulation Controls (Top Bar)
-![Controls](<../../static/img/docs/Web Interface Introduction/Simulation2.png>)
+![Controls](<../../static/img/docs/web_interface_introduction/Simulation2.png>)
 
 The top bar contains the main simulation controls:
 
@@ -57,7 +57,7 @@ The top bar contains the main simulation controls:
 
 
 ### 4. Right-Side Function Panel
-![Function Panel](<../../static/img/docs/Web Interface Introduction/Simulation3.png>)
+![Function Panel](<../../static/img/docs/web_interface_introduction/Simulation3.png>)
 The panel on the right provides quick access to core modules for monitoring and interacting with the simulation in real time.
 
 -   **Characters**: This tab displays a list of all agents currently active in the simulation. You can click on an agent to view their detailed profile, including their current state, attributes, memory, and recent actions. This is invaluable for tracking and understanding individual agent behavior.
