@@ -40,9 +40,10 @@ class TencentChatAdapter(ModelAdapterBase):
         self.stream = stream
         self.generate_args = generate_args or {}
         # ensure base_url points to Tencent Hunyuan endpoint
+        client_args = client_args or {}
         default_base_url = "https://api.hunyuan.cloud.tencent.com/v1"
         client_args.setdefault("base_url", default_base_url)
-        client_args = client_args or {}
+
         # sync client
         self.client = OpenAI(api_key=api_key, **client_args)
         # async client if available

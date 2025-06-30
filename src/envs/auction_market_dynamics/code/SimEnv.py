@@ -4,7 +4,7 @@ from .events import StartEvent
 class SimEnv(BasicSimEnv):
     async def _create_start_event(self, target_id: str) -> StartEvent:
         # Extract relevant information from self.data according to StartEvent
-        source_id = self.get_data('id')
+        source_id = await self.get_data('id', 'ENV')
         market_conditions = {
             'market_liquidity': self.data.get('market_liquidity', 'medium'),
             'information_asymmetry': self.data.get('information_asymmetry', 'low'),

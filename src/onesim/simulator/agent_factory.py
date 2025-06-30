@@ -552,13 +552,26 @@ class AgentFactory:
             logger.error(f"Class {strategy_class_name} not found in onesim.memory: {e}")
         except Exception as e:
             logger.error(f"An error occurred during memory initialization: {e}")
-
         # Fallback to a simple memory strategy
         try:
+            memory_module = importlib.import_module("onesim.memory")
             ListStrategy = getattr(memory_module, "ListStrategy")
-            return ListStrategy({"strategy": "ListStrategy"}, model_config_name=model_config_name)
-        except Exception:
-            logger.error("Failed to create fallback memory strategy")
+            # Create minimal config for ListStrategy with basic operations
+            fallback_config = {
+                "strategy": "ListStrategy",
+                "operations": {
+                    "add": {"class": "AddMemoryOperation"},
+                    "retrieve": {"class": "RetrieveMemoryOperation"},
+                    "remove": {"class": "RemoveMemoryOperation"},
+                },
+            }
+
+            logger.warning(
+                f"Falling back to ListStrategy with config: {fallback_config}"
+            )
+            return ListStrategy(fallback_config, model_config_name=model_config_name)
+        except Exception as e:
+            logger.error(f"Failed to create fallback memory strategy: {e}")
             return None
 
     @staticmethod

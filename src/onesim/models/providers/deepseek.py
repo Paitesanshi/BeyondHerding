@@ -40,11 +40,12 @@ class DeepSeekChatAdapter(ModelAdapterBase):
         super().__init__(config_name=config_name, model_name=model_name, **kwargs)
         self.stream = stream
         self.generate_args = generate_args or {}
-        
+
+        client_args = client_args or {}
         # Ensure base_url points to DeepSeek API
         default_base_url = "https://api.deepseek.com/v1/"
         client_args.setdefault("base_url", default_base_url)
-        client_args = client_args or {}
+
         # store for list_models
         self._api_key = api_key
         self._base_url = client_args["base_url"].rstrip('/')

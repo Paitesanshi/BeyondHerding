@@ -212,58 +212,58 @@ async def save_config(data: SaveConfigRequest):
     """
     env_name = data.env_name
     user_config = data.config
-    
+
     # 检查场景是否存在
     scenes_root = os.path.join(os.getcwd(),"src", "envs")
     scene_path = os.path.join(scenes_root, env_name)
-    
+
     if not os.path.exists(scene_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
-    
+
     # 从默认配置开始
     merged_config = json.loads(json.dumps(DEFAULT_CONFIG))
-    
+
     # 如果用户配置中存在则更新模拟器设置
     # if "simulator" in user_config:
     #     if "simulator" not in merged_config:
     #         merged_config["simulator"] = {}
-        
+
     if "environment" in user_config:
         if "environment" not in merged_config["simulator"]:
             merged_config["simulator"]["environment"] = {}
-        
+
         # 更新环境设置，保留名称
         env_config = user_config["environment"]
         merged_config["simulator"]["environment"].update(env_config)
         # 确保环境名称设置正确
         merged_config["simulator"]["environment"]["name"] = env_name
-    
+
     # 如果在用户配置中存在则更新代理设置
     if "agent" in user_config:
         if "agent" not in merged_config:
             merged_config["agent"] = {}
-        
+
         # 更新配置文件设置
         if "profile" in user_config["agent"]:
             if "profile" not in merged_config["agent"]:
                 merged_config["agent"]["profile"] = {}
-            
+
             # 为用户配置中的每个代理类型更新配置文件计数
             for agent_type, profile_data in user_config["agent"]["profile"].items():
                 if agent_type not in merged_config["agent"]["profile"]:
                     merged_config["agent"]["profile"][agent_type] = {}
-                
+
                 # 更新计数但保留其他设置
                 if "count" in profile_data:
                     merged_config["agent"]["profile"][agent_type]["count"] = profile_data["count"]
-        
+
         # 更新规划设置
         if "planning" in user_config["agent"]:
             if user_config["agent"]["planning"]=="None":
                 merged_config["agent"]["planning"] = None
             else:
                 merged_config["agent"]["planning"] = user_config["agent"]["planning"]
-        
+
         # 更新内存设置
         if "memory" in user_config["agent"]:
             if "memory" not in merged_config["agent"]:
@@ -272,27 +272,65 @@ async def save_config(data: SaveConfigRequest):
                 merged_config["agent"]["memory"] = None
             else:
                 merged_config["agent"]["memory"]["strategy"] = user_config["agent"]["memory"]
-    
+
     # 如果在用户配置中存在则更新模型设置
     if "model" in user_config:
         if "model" not in merged_config:
             merged_config["model"] = {}
-        
+
         # 更新聊天模型选择（必需）
         if "chat" in user_config["model"]:
             chat_model = user_config["model"]["chat"]
             if not chat_model:
                 raise HTTPException(status_code=400, detail="需要聊天模型选择")
             merged_config["model"]["chat"] = chat_model
-        
+
         # 更新嵌入模型选择（可选）
         if "embedding" in user_config["model"]:
             merged_config["model"]["embedding"] = user_config["model"]["embedding"]
-    
+
+    embedding_model_name = user_config.get("model", {}).get("embedding")
+    agent_memory_config = merged_config.get("agent", {}).get("memory")
+
+    if (
+        embedding_model_name
+        and agent_memory_config
+        and agent_memory_config.get("strategy") == "ShortLongStrategy"
+    ):
+        embedding_config_name = None
+        if os.path.exists(MODEL_CONFIG_PATH):
+            try:
+                with open(MODEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
+                    model_config = json.load(f)
+                if "embedding" in model_config:
+                    for model in model_config["embedding"]:
+                        if model.get("model_name") == embedding_model_name:
+                            embedding_config_name = model.get("config_name")
+                            break
+            except Exception as e:
+                logger.error(f"Error in finding embedding model config name: {e}")
+
+        if embedding_config_name:
+            if (
+                "storages" in agent_memory_config
+                and "long_term_storage" in agent_memory_config["storages"]
+            ):
+                agent_memory_config["storages"]["long_term_storage"][
+                    "model_config_name"
+                ] = embedding_config_name
+
+            if (
+                "metrics" in agent_memory_config
+                and "relevance" in agent_memory_config["metrics"]
+            ):
+                agent_memory_config["metrics"]["relevance"][
+                    "model_config_name"
+                ] = embedding_config_name
+
     try:
         # 仅在内存中存储用于当前模拟
         USER_CONFIGS[env_name] = merged_config
-        
+
         return SaveConfigResponse(
             success=True,
             message=f"已保存环境'{env_name}'的配置"

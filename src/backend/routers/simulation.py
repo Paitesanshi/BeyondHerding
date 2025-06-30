@@ -47,7 +47,6 @@ router = APIRouter(
 )
 
 
-
 async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
     """
     初始化模拟环境和相关组件。
@@ -63,10 +62,10 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
     # 检查环境是否存在
     scenes_root = os.path.join(os.getcwd(),"src", "envs")
     env_path = os.path.join(scenes_root, env_name)
-    
+
     if not os.path.exists(env_path):
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在")
-    
+
     try:
         # 获取配置 - 使用内存中的配置或默认配置
         if env_name in USER_CONFIGS:
@@ -75,33 +74,33 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
         else:
             logger.info(f"使用默认环境配置: {env_name}")
             config_data = DEFAULT_CONFIG
-        
+
         # 确保配置包含必要的环境信息
         config_data['env_name'] = env_name
         config_data['env_path'] = env_path
-        
+
         # 如果未提供模型名称，尝试从配置获取
         if not model_name and "model" in config_data:
             if "chat" in config_data["model"]:
                 model_name = config_data["model"]["chat"]
                 logger.info(f"从配置获取模型: {model_name}")
-        
+
         # 确保基础组件已初始化
         components_to_init = ["model"]
-        
+
         # 添加其他可能需要的组件
         if config_data.get("monitor", {}).get("enabled", False):
             components_to_init.append("monitor")
-        
+
         if config_data.get("database", {}).get("enabled", False):
             components_to_init.append("database")
-            
+
         if config_data.get("distribution", {}).get("enabled", False):
             components_to_init.append("distribution")
-            
+
         # 初始化必要的OneSim组件
         from onesim import init, COMPONENT_MODEL, COMPONENT_MONITOR, COMPONENT_DATABASE, COMPONENT_DISTRIBUTION
-        
+
         # 转换组件名称为常量
         component_map = {
             "model": COMPONENT_MODEL,
@@ -109,12 +108,10 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
             "database": COMPONENT_DATABASE,
             "distribution": COMPONENT_DISTRIBUTION
         }
-        
+
         # 准备初始化配置
         init_components = [component_map[c] for c in components_to_init if c in component_map]
-        
-       
-        
+
         # 初始化组件并获取配置
         config = await onesim.init(
             components=init_components,
@@ -122,30 +119,29 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
             model_config_path=MODEL_CONFIG_PATH,
             #model_config_dict=model_config_dict
         )
-        
-        
+
         # 加载模型
         model = await load_model_if_needed(model_name)
         model_config_name = model.config_name
         # 加载SimEnv类定义
         import sys
         import importlib.util
-        
+
         if scenes_root not in sys.path:
             sys.path.append(scenes_root)
-            
+
         module_name = f"{env_name}.code.SimEnv"
         try:
             sim_env_module = importlib.import_module(module_name)
             if not hasattr(sim_env_module, "SimEnv"):
                 raise AttributeError(f"模块 {module_name} 不包含名为 'SimEnv' 的类")
-            
+
             SimEnv = getattr(sim_env_module, "SimEnv")
             logger.info(f"已加载环境类: {SimEnv.__name__}")
         except Exception as e:
             logger.error(f"加载环境类错误: {e}")
             raise Exception(f"无法加载环境类: {str(e)}")
-    
+
         # 创建代理工厂
         agent_factory = AgentFactory(
             simulator_config=config.simulator_config,
@@ -153,58 +149,38 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
             env_path=env_path,
             agent_config=config.agent_config
         )
-        
+
         # 创建代理
         logger.info("创建代理实例")
         agents = await agent_factory.create_agents()
-        
+
         # 构建工作流图
         logger.info("构建工作流图")
         actions_path = os.path.join(env_path, "actions.json")
         events_path = os.path.join(env_path, "events.json")
-        
+
         # 解析操作和事件定义
         from onesim.config import parse_json
         actions = parse_json(actions_path)
         events = parse_json(events_path)
-        
+
         # 创建工作流图并获取起始/结束节点
         work_graph = WorkGraph()
         work_graph.load_workflow_data(actions, events)
         start_agent_types = work_graph.get_start_agent_types()
         end_agent_types = work_graph.get_end_agent_types()
-        
+
         start_agent_ids = agent_factory.get_agent_profile_ids(start_agent_types)
         end_agent_ids = agent_factory.get_agent_profile_ids(end_agent_types)
-        
+
         # 添加环境关系
         for agent_type, ids in end_agent_ids.items():
             for agent_id in ids:
                 agent_factory.add_env_relationship(agent_id)
-        
+
         # 获取事件总线
         event_bus = get_event_bus()
-        
-        # 创建环境实例
-        simulator_config = config.simulator_config
-        env_settings = simulator_config.environment
-        
-        sim_env = SimEnv(
-            env_name,
-            event_bus,
-            {},  # initial data
-            start_agent_ids,
-            end_agent_ids,
-            env_settings,
-            agents,
-            env_path,
-            str(uuid.uuid4())  # simulation_id
-        )
-        end_events = work_graph.get_end_events()
-        # Register termination events
-        for event_name in end_events:
-            sim_env.register_event(event_name, 'terminate')
-        
+
         # 为分布式场景做检查
         is_distributed = False
         registry = get_component_registry()
@@ -212,29 +188,29 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
             node = registry.get_instance(COMPONENT_DISTRIBUTION)
             is_distributed = True
             logger.info(f"检测到分布式模式: {node.role}")
-        
+
         # 初始化数据跟踪ID（如果启用数据库）
         trail_id = None
         if registry.is_initialized(COMPONENT_DATABASE):
             try:
                 from onesim.data import ScenarioManager, TrailManager
                 import time
-                
+
                 # 创建或获取情景ID
                 scenario_mgr = ScenarioManager()
                 env_config = config.simulator_config.environment
-                
+
                 # 尝试找到现有场景
                 scenarios = await scenario_mgr.get_scenario_by_name(name=env_name, exact_match=True)
                 scenario_id = None
-                
+
                 if scenarios and len(scenarios) > 0:
                     for scenario in scenarios:
                         if scenario['name'] == env_name:
                             scenario_id = scenario['scenario_id']
                             logger.info(f"使用现有场景ID {scenario_id} for {env_name}")
                             break
-                
+
                 if scenario_id is None:
                     # 创建新场景
                     env_path=os.path.join("src","envs",env_name)
@@ -248,7 +224,7 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
                         }
                     )
                     logger.info(f"创建新场景ID {scenario_id} for {env_name}")
-                
+
                 # 创建trail
                 trail_mgr = TrailManager()
                 trail_name = f"{env_name}_run_{time.strftime('%Y%m%d_%H%M%S')}"
@@ -261,14 +237,28 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
                 logger.info(f"创建数据跟踪ID {trail_id} 用于数据存储")
             except Exception as e:
                 logger.error(f"初始化数据存储错误: {e}, 继续而不存储数据")
-        
-        # if registry.is_initialized(COMPONENT_MONITOR):
-        #     await MonitorManager.setup_metrics(
-        #         env=sim_env
-        #     )
-        
+
+        # 创建环境实例
+        simulator_config = config.simulator_config
+        env_settings = simulator_config.environment
+        sim_env = SimEnv(
+            env_name,
+            event_bus,
+            {},  # initial data
+            start_agent_ids,
+            end_agent_ids,
+            env_settings,
+            agents,
+            env_path,
+            trail_id,  # Pass trail_id to environment
+        )
+        end_events = work_graph.get_end_events()
+        # Register termination events
+        for event_name in end_events:
+            sim_env.register_event(event_name, 'terminate')
+
         simulation_id = str(uuid.uuid4())
-         
+
         # 在全局注册表中存储代理工厂和代理 - 与simulation.py中的格式保持一致
         SIMULATION_REGISTRY[env_name] = {
             "agent_factory": agent_factory,
@@ -294,7 +284,7 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
             "pause_time": None,
             "events": []
         }
-        
+
         created_agents=[]
         for agent_type in agents:
             for agent_id, agent in agents[agent_type].items():
@@ -324,14 +314,13 @@ async def initialize_simulation(env_name: str, model_name: str = None) -> dict:
             },
             "ready_for_simulation": True
         }
-        
+
         logger.info(f"环境 '{env_name}' 初始化成功")
         return result
-        
+
     except Exception as e:
         logger.error(f"初始化模拟环境出错: {str(e)}")
         raise HTTPException(status_code=500, detail=f"初始化模拟环境失败: {str(e)}")
-
 
 
 @router.post("/initialize")
@@ -381,7 +370,7 @@ def get_agents_info(data: GetAgentsRequest):
 async def start_simulation(data: StartSimulationRequest):
     """启动仿真"""
     env_name = data.env_name
-    
+
     # Ensure only one simulation runs at a time
     env_names_to_remove = []
     for other_env_name, other_registry in SIMULATION_REGISTRY.items():
@@ -395,23 +384,25 @@ async def start_simulation(data: StartSimulationRequest):
                 # Decide if we should still try to remove or halt starting the new one
                 # For now, we log the error and mark for removal if stop seemed to proceed partially
                 if not SIMULATION_REGISTRY.get(other_env_name, {}).get("running", False):
-                     env_names_to_remove.append(other_env_name)
+                    env_names_to_remove.append(other_env_name)
 
     for name_to_remove in env_names_to_remove:
-         if name_to_remove in SIMULATION_REGISTRY:
-             logger.info(f"Removing registry entry for stopped simulation: {name_to_remove}")
-             try:
-                 del SIMULATION_REGISTRY[name_to_remove]
-             except KeyError:
-                 logger.warning(f"Registry entry for {name_to_remove} already removed.")
+        if name_to_remove in SIMULATION_REGISTRY:
+            logger.info(
+                f"Removing registry entry for stopped simulation: {name_to_remove}"
+            )
+            try:
+                del SIMULATION_REGISTRY[name_to_remove]
+            except KeyError:
+                logger.warning(f"Registry entry for {name_to_remove} already removed.")
 
     # Check if the requested environment exists
     if env_name not in SIMULATION_REGISTRY:
         # 如果环境不存在，则直接报错
         raise HTTPException(status_code=404, detail=f"环境 '{env_name}' 不存在或初始化失败")
-    
+
     registry = SIMULATION_REGISTRY[env_name]
-    
+
     # 检查环境是否需要重新初始化（停止后再启动）
     if registry.get("status") == "stopped" or registry.get("needs_reinit", False):
         logger.info(f"检测到环境 '{env_name}' 需要重新初始化")
@@ -425,23 +416,23 @@ async def start_simulation(data: StartSimulationRequest):
             if "config" in registry and "model" in registry["config"]:
                 if "chat" in registry["config"]["model"]:
                     model_name = registry["config"]["model"]["chat"]
-            
+
             # 重新初始化环境
             await initialize_simulation(env_name, model_name)
             logger.info(f"环境 '{env_name}' 自动重初始化成功")
-            
+
             # 获取重新初始化后的注册表
             registry = SIMULATION_REGISTRY[env_name]
-            
+
         except Exception as e:
             logger.error(f"自动重初始化环境 '{env_name}' 失败: {str(e)}")
             raise HTTPException(status_code=500, 
                 detail=f"环境 '{env_name}' 需要重新初始化，但自动重初始化失败: {str(e)}")
-    
+
     # 检查初始化状态
     if not registry.get("initialized", False):
         raise HTTPException(status_code=400, detail=f"环境 '{env_name}' 未初始化。请先保存配置。")
-    
+
     # 检查是否已经在运行
     if registry.get("running", False):
         return StartSimulationResponse(
@@ -449,48 +440,46 @@ async def start_simulation(data: StartSimulationRequest):
             message=f"环境 '{env_name}' 仿真已经在运行中",
             simulation_id=registry.get("simulation_id", f"sim_{env_name}")
         )
-    
+
     try:
         # 创建模拟ID
         simulation_id = str(uuid.uuid4())
-        
+
         # 获取初始化数据
         agents = registry["agents"]
         event_bus = registry["event_bus"]
         start_agent_ids = registry["start_agent_ids"]
         end_agent_ids = registry["end_agent_ids"]
         sim_env = registry["sim_env"]
-        
-        # 更新模拟ID
-        if hasattr(sim_env, "trail_id"):
-            sim_env.trail_id = simulation_id
-        elif hasattr(sim_env, "simulation_id"):
+
+        if hasattr(sim_env, "simulation_id"):
             sim_env.simulation_id = simulation_id
-        
+
         # 确保模拟环境状态正确
         if hasattr(sim_env, "_state") and sim_env._state == SimulationState.TERMINATED:
             logger.info(f"重置模拟环境状态从TERMINATED到INITIALIZED，环境: '{env_name}'")
             await sim_env.set_simulation_state(SimulationState.INITIALIZED, reason="restart")
-            
+
         # 重置代理状态
         for agent_type in agents:
             for agent_id, agent in agents[agent_type].items():
                 if hasattr(agent, "stopped") and agent.stopped:
                     agent.stopped = False
                     logger.debug(f"重置代理停止状态: {agent_id}")
-        
+
         # 注册环境到事件总线
         event_bus.register_agent("ENV", sim_env)
-        
+
         # 注册代理到事件总线并设置环境
         for agent_type in agents:
             for agent_id, agent in agents[agent_type].items():
                 if hasattr(agent, "set_env"):
                     agent.set_env(sim_env)
                 event_bus.register_agent(agent_id, agent)
-                
-        logger.info(f"已注册环境和 {sum(len(agents[t]) for t in agents)} 个代理到事件总线")
-        
+
+        logger.info(
+            f"已注册环境和 {sum(len(agents[t]) for t in agents)} 个代理到事件总线"
+        )
 
         simulator_registry = get_component_registry()
         if simulator_registry.is_initialized("monitor"):
@@ -498,44 +487,43 @@ async def start_simulation(data: StartSimulationRequest):
                 env=sim_env
             )
 
-
         # 更新注册表信息
         registry["simulation_id"] = simulation_id
         registry["running"] = True
         registry["paused"] = False
         registry["needs_reinit"] = False  # 清除重初始化标记
-        
+
         # 启动模拟任务
         async def run_simulation_tasks():
             try:
                 # 创建终止事件
                 termination_event = asyncio.Event()
                 registry["termination_event"] = termination_event
-                
+
                 # 获取环境任务
                 env_tasks = await sim_env.run()
-                
+
                 # 创建代理任务
                 agent_tasks = []
                 for agent_type in agents:
                     for agent_id, agent in agents[agent_type].items():
                         if hasattr(agent, "run"):
                             agent_tasks.append(asyncio.create_task(agent.run()))
-                
+
                 # 运行事件总线任务
                 event_bus_task = asyncio.create_task(event_bus.run())
-                
+
                 # 确保环境任务是Task对象
                 env_task_coroutines = await sim_env.run()
                 env_tasks = [asyncio.create_task(task) if not isinstance(task, asyncio.Task) else task 
                              for task in env_task_coroutines]
-                
+
                 # 全部任务列表
                 all_tasks = [event_bus_task] + agent_tasks + env_tasks
-                
+
                 # 存储任务列表
                 registry["tasks"] = all_tasks
-                
+
                 # 等待任务完成或终止信号
                 while not termination_event.is_set():
                     try:
@@ -545,13 +533,13 @@ async def start_simulation(data: StartSimulationRequest):
                             timeout=1.0,
                             return_when=asyncio.FIRST_COMPLETED
                         )
-                        
+
                         # 检查终止信号
                         if termination_event.is_set():
                             logger.info(f"收到终止信号，停止环境 '{env_name}' 模拟")
                             await sim_env.stop_simulation()
                             break
-                        
+
                         # 检查任务状态
                         for task in done:
                             if task.done():
@@ -560,17 +548,17 @@ async def start_simulation(data: StartSimulationRequest):
                                     await sim_env.stop_simulation()
                                     termination_event.set()
                                     break
-                        
+
                         # 如果事件总线停止运行，结束模拟
                         if hasattr(event_bus, "_running") and not event_bus._running:
                             logger.warning(f"事件总线已停止运行，环境: '{env_name}'")
                             termination_event.set()
                             break
-                            
+
                         # 继续等待
                         if not termination_event.is_set():
                             continue
-                            
+
                     except asyncio.CancelledError:
                         logger.info(f"模拟任务被取消，环境: '{env_name}'")
                         break
@@ -578,65 +566,65 @@ async def start_simulation(data: StartSimulationRequest):
                         logger.error(f"模拟执行错误: {e}")
                         await sim_env.stop_simulation()
                         termination_event.set()
-                
+
                 # 清理资源
                 logger.info(f"模拟已结束，清理资源，环境: '{env_name}'")
                 registry["running"] = False
-                
+
                 # 关闭环境的WebSocket连接
                 try:
                     await connection_manager.close_websocket_by_env_name(env_name)
                     logger.info(f"已关闭环境 '{env_name}' 的WebSocket连接")
                 except Exception as e:
                     logger.error(f"关闭WebSocket连接时出错: {e}")
-                
+
                 # 取消所有任务
                 for task in all_tasks:
                     if not task.done():
                         task.cancel()
-                
+
                 # 等待任务取消完成
                 await asyncio.gather(*all_tasks, return_exceptions=True)
-                
+
             except Exception as e:
                 logger.error(f"模拟执行错误: {e}")
                 registry["running"] = False
-                
+
                 # 关闭环境的WebSocket连接
                 try:
                     await connection_manager.close_websocket_by_env_name(env_name)
                     logger.info(f"已关闭环境 '{env_name}' 的WebSocket连接")
                 except Exception as e:
                     logger.error(f"关闭WebSocket连接时出错: {e}")
-                
+
                 # 取消任务
                 if 'all_tasks' in locals():
                     for task in all_tasks:
                         if not task.done():
                             task.cancel()
-                    
+
                     try:
                         await asyncio.gather(*all_tasks, return_exceptions=True)
                     except Exception:
                         pass
-        
+
         # 后台启动模拟任务
         asyncio.create_task(run_simulation_tasks())
-        
+
         # 准备统计信息
         agent_count = sum(len(agents[agent_type]) for agent_type in agents)
-        
+
         # 更新模拟状态
         registry["status"] = "running"
         registry["start_time"] = time.time()
         registry["pause_time"] = None
-        
+
         return StartSimulationResponse(
             success=True,
             message=f"环境 '{env_name}' 仿真已启动，共 {agent_count} 个代理",
             simulation_id=simulation_id
         )
-        
+
     except Exception as e:
         logger.error(f"启动仿真错误: {e}")
         raise HTTPException(status_code=500, detail=f"启动仿真失败: {str(e)}")

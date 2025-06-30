@@ -69,7 +69,7 @@ class LoadBalancer(ModelAdapterBase):
     - For synchronous: model(...) or model.__call__(...)
     - For asynchronous: await model.acall(...)
     """
-    
+
     def __init__(
         self,
         config_name: str = "chat_load_balancer",
@@ -97,7 +97,7 @@ class LoadBalancer(ModelAdapterBase):
             **kwargs: Additional parameters for the base model.
         """
         super().__init__(config_name=config_name, **kwargs)
-        
+
         self.models = models or []
         self._model_instances = []
         self._strategy_name = strategy
@@ -105,11 +105,11 @@ class LoadBalancer(ModelAdapterBase):
         self.provider = provider
         self.model_name = model_name  # Store the model name if specified
         self.max_retries = max_retries  # Store max retries
-        
+
         if self.category not in ["chat", "embedding"]:
             logger.warning(f"Unknown category '{category}', defaulting to 'chat'")
             self.category = "chat"
-        
+
         # Initialize the strategy
         if strategy == "round_robin":
             self._strategy = RoundRobinStrategy()
@@ -117,10 +117,10 @@ class LoadBalancer(ModelAdapterBase):
             self._strategy = RandomStrategy()
         else:
             raise ValueError(f"Unknown load balancing strategy: {strategy}")
-        
+
         # For backward compatibility
         self.model_type = self.category
-    
+
     def initialize_models(self, model_manager=None):
         """
         Initialize model instances from config names.
@@ -132,7 +132,7 @@ class LoadBalancer(ModelAdapterBase):
         if not model_manager:
             from onesim.models import get_model_manager
             model_manager = get_model_manager()
-        
+
         self._model_instances = []
         for model in self.models:
             if isinstance(model, str):
@@ -148,10 +148,10 @@ class LoadBalancer(ModelAdapterBase):
                 self._model_instances.append(model)
             else:
                 raise TypeError(f"Expected str or ModelAdapterBase, got {type(model)}")
-        
+
         if not self._model_instances:
             logger.warning(f"Load balancer '{self.config_name}' has no models configured")
-    
+
     def _try_with_model(self, model: ModelAdapterBase, *args, **kwargs) -> ModelResponse:
         """
         Try to process a request with a specific model.
@@ -169,22 +169,22 @@ class LoadBalancer(ModelAdapterBase):
         """
         try:
             response = model(*args, **kwargs)
-            
+
             # Add metadata about the load balancer
             if hasattr(response, 'raw') and response.raw is not None:
                 if not isinstance(response.raw, dict):
                     response.raw = {"original": response.raw}
-                
+
                 response.raw.update({
                     "load_balancer": self.config_name,
                     "selected_model": model.config_name
                 })
-            
+
             return response
         except Exception as e:
             logger.warning(f"Model '{model.config_name}' failed: {str(e)}")
             raise
-    
+
     def __call__(self, *args, **kwargs) -> ModelResponse:
         """
         Process a request synchronously using one of the balanced models.
@@ -206,30 +206,29 @@ class LoadBalancer(ModelAdapterBase):
         """
         if not self._model_instances:
             raise ValueError(f"Load balancer '{self.config_name}' has no initialized models")
-        
+
         last_error = None
         tried_models = set()
-        
+
         for _ in range(self.max_retries):
             # Select a model based on the strategy
             model = self._strategy.select_model(self._model_instances)
-            
+
             # Skip if we've already tried this model
             if model.config_name in tried_models:
                 continue
-                
+
             tried_models.add(model.config_name)
-            #logger.debug(f"Load balancer '{self.config_name}' selected model '{model.model_name}'")
-            
+
             try:
                 return self._try_with_model(model, *args, **kwargs)
             except Exception as e:
                 last_error = e
                 continue
-        
+
         # If we get here, all models failed
         raise Exception(f"All models failed after {self.max_retries} attempts. Last error: {str(last_error)}")
-    
+
     async def _try_with_model_async(self, model: ModelAdapterBase, *args, **kwargs) -> ModelResponse:
         """
         Try to process a request asynchronously with a specific model.
@@ -247,22 +246,22 @@ class LoadBalancer(ModelAdapterBase):
         """
         try:
             response = await model.acall(*args, **kwargs)
-            
+
             # Add metadata about the load balancer
             if hasattr(response, 'raw') and response.raw is not None:
                 if not isinstance(response.raw, dict):
                     response.raw = {"original": response.raw}
-                
+
                 response.raw.update({
                     "load_balancer": self.config_name,
                     "selected_model": model.config_name
                 })
-            
+
             return response
         except Exception as e:
             logger.warning(f"Model '{model.config_name}' failed: {str(e)}")
             raise
-    
+
     async def acall(self, *args, **kwargs) -> ModelResponse:
         """
         Process a request asynchronously using one of the balanced models.
@@ -284,27 +283,26 @@ class LoadBalancer(ModelAdapterBase):
         """
         if not self._model_instances:
             raise ValueError(f"Load balancer '{self.config_name}' has no initialized models")
-        
+
         last_error = None
         tried_models = set()
-        
+
         for _ in range(self.max_retries):
             # Select a model based on the strategy
             model = self._strategy.select_model(self._model_instances)
-            
+
             # Skip if we've already tried this model
             if model.config_name in tried_models:
                 continue
-                
+
             tried_models.add(model.config_name)
-            #logger.debug(f"Load balancer '{self.config_name}' selected model '{model.model_name}'")
-            
+
             try:
                 return await self._try_with_model_async(model, *args, **kwargs)
             except Exception as e:
                 last_error = e
                 continue
-        
+
         # If we get here, all models failed
         raise Exception(f"All models failed after {self.max_retries} attempts. Last error: {str(last_error)}")
     # FEAT: add list_models and alist_models
@@ -324,7 +322,7 @@ class LoadBalancer(ModelAdapterBase):
         """
         # directly reuse the sync method
         return self.list_models()
-    
+
     def format(self, *args: Union[Message, Sequence[Message]]) -> Any:
         """
         Format messages using the first model's formatter.
@@ -340,10 +338,10 @@ class LoadBalancer(ModelAdapterBase):
         """
         if not self._model_instances:
             raise ValueError(f"Load balancer '{self.config_name}' has no initialized models")
-        
+
         # Use the first model for formatting
         return self._model_instances[0].format(*args)
-    
+
     def get_info(self) -> Dict[str, Any]:
         """
         Get information about this load balancer instance.
@@ -352,15 +350,15 @@ class LoadBalancer(ModelAdapterBase):
             Dict containing load balancer configuration details.
         """
         base_info = super().get_info()
-        
+
         if not self._model_instances:
             self.initialize_models()
-            
+
         model_configs = [
             model.config_name if hasattr(model, "config_name") else str(model)
             for model in self._model_instances
         ]
-        
+
         load_balancer_info = {
             **base_info,
             "model_type": f"{self.category.capitalize()}LoadBalancer",
@@ -368,9 +366,9 @@ class LoadBalancer(ModelAdapterBase):
             "models": model_configs,
             "max_retries": self.max_retries
         }
-        
+
         # Include model_name if specified
         if hasattr(self, 'model_name') and self.model_name:
             load_balancer_info["model_name"] = self.model_name
-            
+
         return load_balancer_info 

@@ -19,17 +19,17 @@ class ModelManager:
     This class acts as a registry and factory for model adapters, handling
     configuration loading and model instantiation.
     """
-    
+
     _instance = None
     _model_types = {}
-    
+
     def __new__(cls, *args, **kwargs):
         """Ensure singleton pattern for ModelManager."""
         if cls._instance is None:
             cls._instance = super(ModelManager, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         """Initialize the model manager if not already initialized."""
         if not getattr(self, '_initialized', False):
@@ -37,7 +37,7 @@ class ModelManager:
             self.load_balancer_configs = {}  # 使用字典存储多个负载均衡器配置
             self._load_balancer_instances = {}  # 缓存已创建的负载均衡器实例
             self._initialized = True
-    
+
     @classmethod
     def get_instance(cls) -> 'ModelManager':
         """
@@ -49,7 +49,7 @@ class ModelManager:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
-    
+
     def initialize(self, config_path: Optional[Union[str, Dict, List]] = None):
         """
         Initialize the model manager with configurations.
@@ -59,7 +59,7 @@ class ModelManager:
         """
         if config_path is not None:
             self.load_model_configs(config_path)
-    
+
     def load_model_configs(
         self, 
         configs: Union[str, Dict, List], 
@@ -74,18 +74,18 @@ class ModelManager:
         """
         if clear_existing:
             self.model_configs.clear()
-        
+
         # Parse configurations based on input type
         config_list = []
-        
+
         if isinstance(configs, str):
             # Load from file path
             if not os.path.exists(configs):
                 raise FileNotFoundError(f"Config file not found: {configs}")
-                
+
             with open(configs, 'r', encoding='utf-8') as f:
                 loaded_configs = json.load(f)
-                
+
             # Process the loaded config based on its structure
             if isinstance(loaded_configs, dict):
                 # Check if it's a categorized config (with chat, embedding keys)
@@ -93,20 +93,20 @@ class ModelManager:
                     # Extract configs from different categories
                     chat_configs = loaded_configs.get("chat", [])
                     embedding_configs = loaded_configs.get("embedding", [])
-                    
+
                     # For chat configs, add category field
                     for config in chat_configs:
                         config["category"] = "chat"
-                    
+
                     # For embedding configs, add category field
                     for config in embedding_configs:
                         config["category"] = "embedding"
-                    
+
                     # Combine all configs
                     config_list = []
                     config_list.extend(chat_configs)
                     config_list.extend(embedding_configs)
-                    
+
                     logger.info(f"Loaded categorized config with {len(chat_configs)} chat and "
                                f"{len(embedding_configs)} embedding models")
                 else:
@@ -117,40 +117,40 @@ class ModelManager:
                 config_list = loaded_configs
             else:
                 raise ValueError(f"Invalid config format in {configs}")
-                
+
         elif isinstance(configs, dict):
             # If it's a dictionary, check if it's categorized
             if "chat" in configs or "embedding" in configs:
                 chat_configs = configs.get("chat", [])
                 embedding_configs = configs.get("embedding", [])
-                
+
                 # For chat configs, add category field
                 for config in chat_configs:
                     config["category"] = "chat"
-                
+
                 # For embedding configs, add category field
                 for config in embedding_configs:
                     config["category"] = "embedding"
-                
+
                 config_list = []
                 config_list.extend(chat_configs)
                 config_list.extend(embedding_configs)
             else:
                 config_list = [configs]
-            
+
         elif isinstance(configs, list):
             config_list = configs
-            
+
         else:
             raise TypeError(
                 f"Expected str, dict, or list, got {type(configs)}"
             )
-        
+
         # Validate and store configurations
         for config in config_list:
             if "config_name" not in config:
                 raise ValueError("Each config must have a 'config_name'")
-            
+
             # Backward compatibility - derive category from model_type if not present
             if "category" not in config:
                 if "model_type" in config:
@@ -161,7 +161,7 @@ class ModelManager:
                         config["category"] = "chat"
                 else:
                     raise ValueError(f"Config '{config['config_name']}' missing 'category' field")
-            
+
             # Ensure provider is present
             if "provider" not in config:
                 # For backward compatibility, derive provider from model_type
@@ -174,19 +174,19 @@ class ModelManager:
                         config["provider"] = model_type
                 else:
                     raise ValueError(f"Config '{config['config_name']}' missing 'provider' field")
-                
+
             # Check for duplicates and warn
             if config["config_name"] in self.model_configs:
                 logger.warning(
                     f"Overwriting existing config '{config['config_name']}'"
                 )
-                
+
             self.model_configs[config["config_name"]] = config
-            
+
         logger.info(
             f"Loaded {len(config_list)} model configs: {', '.join(c['config_name'] for c in config_list)}"
         )
-    
+
     def get_model(self, config_name: Optional[str] = None, model_type: Optional[str] = None, model_name: Optional[str] = None) -> ModelAdapterBase:
         """
         Get a model instance by configuration name or automatically select based on criteria.
@@ -210,47 +210,55 @@ class ModelManager:
         """
         if not self.model_configs:
             raise ValueError("No model configurations loaded")
+
         # Priority 1: Specific config_name provided
         if config_name is not None:
             # Check if it's a load balancer config
             if config_name in self.load_balancer_configs:
                 return self._get_or_create_load_balancer(config_name)
-                
+
             # Otherwise, it's a regular model config
-            if config_name not in self.model_configs:
-                raise ValueError(f"Model config '{config_name}' not found")
-                
-            config = self.model_configs[config_name]
-            provider = config["provider"]
-            
-            # Create the model class
-            model_class = self._get_model_class(provider, config["category"])
-            
-            # Filter out special fields to avoid duplicated parameters
-            kwargs = {k: v for k, v in config.items() if k not in ["provider", "category"]}
-            
-            # Instantiate the model
-            return model_class(**kwargs)
-        
+            if config_name in self.model_configs:
+                config = self.model_configs[config_name]
+                provider = config["provider"]
+                model_class = self._get_model_class(provider, config["category"])
+                kwargs = {
+                    k: v for k, v in config.items() if k not in ["provider", "category"]
+                }
+                return model_class(**kwargs)
+
         # Priority 2: Model name provided - load balance all providers with this model
         if model_name is not None:
             # Create a load balancer for all instances of this model name across providers
             lb_config_name = f"{model_name}_load_balancer"
-            
+
             # Check if we already have this load balancer
             if lb_config_name in self.load_balancer_configs:
                 return self._get_or_create_load_balancer(lb_config_name)
-            
+
             # Otherwise create a new load balancer for this model name
             return self._get_or_create_load_balancer(config_name=None, model_type=model_type, model_name=model_name)
-        
+
         # Priority 3: Model type provided - load balance specific model type or provider
         if model_type is not None:
             return self._get_or_create_load_balancer(config_name=None, model_type=model_type)
-        
-        # Priority 4: No parameters - return default chat load balancer
+
+        # Priority 4: config_name was provided but not found. Try to use it as a model_type.
+        if config_name is not None:
+            try:
+                # This handles cases like get_model("chat") where "chat" is not a specific config name
+                return self._get_or_create_load_balancer(
+                    config_name=None, model_type=config_name
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Model config '{config_name}' not found as a specific configuration, "
+                    f"and could not be used as a model_type."
+                )
+
+        # Priority 5: No parameters - return default chat load balancer
         return self._get_or_create_load_balancer(config_name="chat_load_balancer", model_type="chat")
-    
+
     def _get_model_class(self, provider: str, category: str) -> Type[ModelAdapterBase]:
         """
         Get the model class for a given provider and category.
@@ -294,7 +302,7 @@ class ModelManager:
             },
             # Add additional providers as needed
         }
-        
+
         # Backward compatibility - handle model_type format
         if provider == "openai_chat":
             provider = "openai" 
@@ -326,18 +334,18 @@ class ModelManager:
         elif provider == "tencent_embedding":
             provider = "tencent"
             category = "embedding"
-            
+
         # Check if the provider exists in our registry
         if provider not in model_registry:
             raise ValueError(f"Unknown provider: {provider}")
-        
+
         # Check if the category exists for this provider
         if category not in model_registry[provider]:
             raise ValueError(f"Provider '{provider}' does not support '{category}' category")
-        
+
         # Get module path and class name
         module_path, class_name = model_registry[provider][category]
-        
+
         # Import the module dynamically
         try:
             import importlib
@@ -346,7 +354,7 @@ class ModelManager:
             return model_class
         except (ImportError, AttributeError) as e:
             raise ValueError(f"Failed to import model for provider '{provider}' and category '{category}': {e}")
-    
+
     def get_config(self, config_name: str) -> Optional[Dict[str, Any]]:
         """
         Get a model configuration by name.
@@ -358,13 +366,13 @@ class ModelManager:
             Dict or None: The model configuration if found, otherwise None.
         """
         return self.model_configs.get(config_name)
-    
+
     def clear_configs(self):
         """Clear all loaded model configurations."""
         self.model_configs.clear()
         self.load_balancer_configs.clear()
         self._load_balancer_instances.clear()  # 清除负载均衡器实例缓存
-        
+
     def get_configs_by_type(self, model_type: str) -> List[Dict[str, Any]]:
         """
         Get all model configurations of a specific type.
@@ -376,7 +384,7 @@ class ModelManager:
             List of configuration dictionaries.
         """
         configs = []
-        
+
         for config in self.model_configs.values():
             # If model_type is a category (chat/embedding)
             if model_type.lower() in ["chat", "embedding"]:
@@ -385,9 +393,9 @@ class ModelManager:
             # If model_type is a provider
             elif model_type.lower() == config.get("provider", "").lower():
                 configs.append(config)
-                
+
         return configs
-    
+
     def get_model_names_by_type(self, model_type: str) -> List[str]:
         """
         Get all model configuration names of a specific type.
@@ -434,7 +442,7 @@ class ModelManager:
                 model_configs = []
                 for model_config_name, config in self.model_configs.items():
                     # Extract the actual model name from the configuration
-                    # Some configurations use 'model' key, others 'model_name' 
+                    # Some configurations use 'model' key, others 'model_name'
                     config_model_name = config.get("model_name", config.get("model"))
                     # Filter by model_name and optionally by category/provider
                     if config_model_name == model_name:
@@ -449,27 +457,34 @@ class ModelManager:
                         else:
                             # If no additional filter, include all matches
                             model_configs.append(model_config_name)
-                
+
                 if not model_configs:
                     logger.warning(f"No models found with model_name '{model_name}'")
-            
+
             # Case 2: Provider specified - filter by provider
             elif model_type not in ["chat", "embedding"] and model_type is not None:
                 model_configs = []
                 for model_config_name, config in self.model_configs.items():
                     if config.get("provider") == model_type:
                         model_configs.append(model_config_name)
-                
+
                 if not model_configs:
                     logger.warning(f"No models found with provider '{model_type}'")
-            
+
             # Case 3: Category specified (chat/embedding) - get all models of that category
             else:
                 model_configs = self.get_model_names_by_type(model_type if model_type else "chat")
-                
+
                 if not model_configs:
                     logger.warning(f"No models found of category '{model_type if model_type else 'chat'}'")
-        
+
+        # If no models were found for the criteria, don't create an empty config
+        if not model_configs:
+            error_msg = f"Load balancer '{config_name}' could not be configured because no matching models were found."
+            logger.warning(error_msg)
+            # Prevent creation of an empty/invalid load balancer config
+            raise ValueError(error_msg)
+
         # Store the configuration
         load_balancer_config = {
             "provider": "load_balancer",
@@ -483,18 +498,18 @@ class ModelManager:
         # Clear the instance cache for this config if it exists
         if config_name in self._load_balancer_instances:
             del self._load_balancer_instances[config_name]
-            
+
         logger.info(
             f"Configured load balancer '{config_name}' with strategy '{strategy}' "
             f"and {len(model_configs) if model_configs else 0} models"
         )
-        
+
         # Log the models included in the load balancer for debugging
         if model_configs:
             logger.debug(f"Load balancer '{config_name}' includes models: {', '.join(model_configs)}")
         else:
             logger.warning(f"Load balancer '{config_name}' has no models configured")
-    
+
     def _get_or_create_load_balancer(self, config_name: str=None, model_type: str=None, model_name: str=None) -> ModelAdapterBase:
         """
         Get an existing load balancer or create a new one.
@@ -513,7 +528,7 @@ class ModelManager:
         # Handle default values and backward compatibility
         if model_type is None and model_name is None:
             model_type = "chat"  # Default to chat
-        
+
         # Determine the configuration name to use
         if config_name is None:
             if model_name is not None:
@@ -522,17 +537,14 @@ class ModelManager:
                 if model_type is not None:
                     # With model type specified, use a more specific name
                     config_name = f"{model_name}_{model_type}_load_balancer"
-            elif model_type not in ["chat", "embedding"]:
-                # Using model_type level load balancer (e.g., openai_chat)
-                config_name = f"{model_type}_load_balancer"
             else:
                 # Using general category level load balancer
                 config_name = f"{model_type}_load_balancer"
-        
+
         # Check if we already have this load balancer cached
         if config_name in self._load_balancer_instances:
             return self._load_balancer_instances[config_name]
-        
+
         # If the configuration doesn't exist yet, create it
         if config_name not in self.load_balancer_configs:
             # Auto-configure the load balancer based on available models
@@ -542,14 +554,14 @@ class ModelManager:
                 model_type=model_type,
                 model_name=model_name
             )
-            
+
             if config_name not in self.load_balancer_configs:
                 raise ValueError(f"Failed to create load balancer configuration '{config_name}'")
-        
+
         # Get the load balancer config
         config = self.load_balancer_configs[config_name]
         models = config.get("models", [])
-        
+
         # Validate that there are models to load balance
         if not models:
             # More descriptive error message
@@ -559,15 +571,15 @@ class ModelManager:
                     error_msg += f" and type '{model_type}'"
             else:
                 error_msg = f"No models found for load balancer '{config_name}'"
-            
+
             raise ValueError(error_msg)
-        
+
         # Create the load balancer
         from .load_balancer import LoadBalancer
-        
+
         strategy = config.get("strategy", "round_robin")
         target_model_type = config.get("target_model_type", "chat")
-        
+
         # Create the instance
         load_balancer = LoadBalancer(
             config_name=config_name,
@@ -575,15 +587,15 @@ class ModelManager:
             strategy=strategy,
             model_type=target_model_type
         )
-        
+
         # Initialize the models
         load_balancer.initialize_models(self)
-        
+
         # Cache the instance
         self._load_balancer_instances[config_name] = load_balancer
-        
+
         return load_balancer
-        
+
     def get_model_config_name(self, model_type: str) -> str:
         """
         Get the model config name for a given model type.

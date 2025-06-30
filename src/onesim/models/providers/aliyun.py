@@ -41,6 +41,7 @@ class AliyunChatAdapter(ModelAdapterBase):
         self.stream = stream
         self.generate_args = generate_args or {}
         # set DashScope base_url, but allow override via client_args["base_url"]
+        client_args = client_args or {}
         default_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
         client_args.setdefault("base_url", default_base_url)
         # Initialize the OpenAI client
@@ -50,12 +51,9 @@ class AliyunChatAdapter(ModelAdapterBase):
             raise ImportError(
                 "OpenAI package not found. Please install it using: pip install openai"
             )
-        
-        self.client = openai.OpenAI(
-            api_key=api_key,
-            **(client_args or {})
-        )
-        
+
+        self.client = openai.OpenAI(api_key=api_key, **client_args)
+
         # Initialize the OpenAI async client
         try:
             from openai import AsyncOpenAI
@@ -65,10 +63,7 @@ class AliyunChatAdapter(ModelAdapterBase):
             )
             self.async_client = None
         else:
-            self.async_client = AsyncOpenAI(
-                api_key=api_key,
-                **(client_args or {})
-            )
+            self.async_client = AsyncOpenAI(api_key=api_key, **client_args)
 
     def __call__(
         self,
@@ -290,7 +285,7 @@ class AliyunEmbeddingAdapter(ModelAdapterBase):
 
     def list_models(self) -> List[str]:
         """
-        Reuse chat adapter’s list_models to fetch available models.
+        Reuse chat adapter's list_models to fetch available models.
         """
         # same endpoint for chat and embedding
         headers = {
@@ -327,5 +322,3 @@ class AliyunEmbeddingAdapter(ModelAdapterBase):
             else:
                 raise TypeError(f"Expected str, Message, or sequence, got {type(arg)}")
         return texts
-
-

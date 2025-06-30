@@ -23,7 +23,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
     and other APIs that follow the same format (like local deployments
     using vLLM, FastChat, etc). Supports both synchronous and asynchronous calls.
     """
-    
+
     def __init__(
         self,
         config_name: str,
@@ -49,10 +49,10 @@ class OpenAIChatAdapter(ModelAdapterBase):
             **kwargs: Additional parameters.
         """
         super().__init__(config_name=config_name, model_name=model_name, **kwargs)
-        
+
         self.stream = stream
         self.generate_args = generate_args or {}
-        
+
         # Initialize the OpenAI client
         try:
             import openai
@@ -61,15 +61,16 @@ class OpenAIChatAdapter(ModelAdapterBase):
                 "OpenAI package not found. Please install it using: pip install openai"
             )
         # FEAT:fixed API address
+        client_args = client_args or {}
         default_base_url = "https://api.openai.com/v1/"
         client_args.setdefault("base_url", default_base_url)
-        client_args = client_args or {}
+
         self.client = openai.OpenAI(
             api_key=api_key,
             organization=organization,
             **client_args
         )
-        
+
         # Initialize the OpenAI async client
         try:
             from openai import AsyncOpenAI
@@ -84,7 +85,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
                 organization=organization,
                 **client_args
             )
-    
+
     def __call__(
         self,
         messages: List[Dict],
@@ -104,27 +105,27 @@ class OpenAIChatAdapter(ModelAdapterBase):
         """
         # Merge default arguments with provided ones
         call_kwargs = {**self.generate_args, **kwargs}
-        
+
         # Validate messages format
         self._validate_messages(messages)
-        
+
         # Determine streaming mode
         use_stream = self.stream if stream is None else stream
-        
+
         # Set up API call parameters
         call_kwargs.update({
             "model": self.model_name,
             "messages": messages,
             "stream": use_stream
         })
-        
+
         if use_stream:
             call_kwargs["stream_options"] = {"include_usage": True}
-        
+
         try:
             # Make the API call
             response = self.client.chat.completions.create(**call_kwargs)
-            
+
             if use_stream:
                 # Handle streaming response
                 def generate_stream():
@@ -137,11 +138,11 @@ class OpenAIChatAdapter(ModelAdapterBase):
                             text += content
                             yield text
                         last_chunk = chunk_data
-                    
+
                     # Track token usage from the last chunk if available
                     if "usage" in last_chunk:
                         self._track_token_usage(last_chunk["usage"])
-                
+
                 return ModelResponse(
                     stream=generate_stream(),
                     model_info={
@@ -152,11 +153,11 @@ class OpenAIChatAdapter(ModelAdapterBase):
             else:
                 # Handle normal response
                 response_data = response.model_dump()
-                
+
                 # Track token usage
                 if "usage" in response_data:
                     self._track_token_usage(response_data["usage"])
-                
+
                 if self._has_content_in_message(response_data):
                     content = response_data["choices"][0]["message"]["content"]
                     return ModelResponse(
@@ -170,11 +171,11 @@ class OpenAIChatAdapter(ModelAdapterBase):
                     )
                 else:
                     raise ValueError(f"Invalid response format: {response_data}")
-                    
+
         except Exception as e:
             logger.error(f"Error calling OpenAI API: {str(e)}")
             raise
-    
+
     async def acall(
         self,
         messages: List[Dict],
@@ -194,23 +195,23 @@ class OpenAIChatAdapter(ModelAdapterBase):
         """
         # Merge default arguments with provided ones
         call_kwargs = {**self.generate_args, **kwargs}
-        
+
         # Validate messages format
         self._validate_messages(messages)
-        
+
         # Determine streaming mode
         use_stream = self.stream if stream is None else stream
-        
+
         # Set up API call parameters
         call_kwargs.update({
             "model": self.model_name,
             "messages": messages,
             "stream": use_stream
         })
-        
+
         if use_stream:
             call_kwargs["stream_options"] = {"include_usage": True}
-        
+
         try:
             # Use async client if available, otherwise run sync client in thread
             if self.async_client:
@@ -221,47 +222,47 @@ class OpenAIChatAdapter(ModelAdapterBase):
                     None, 
                     lambda: self.client.chat.completions.create(**call_kwargs)
                 )
-            
+
             if use_stream:
                 # Handle streaming response
                 async def generate_stream_async():
                     text = ""
                     last_chunk = {}
-                    
+
                     async for chunk in response:
                         chunk_data = chunk.model_dump()
-                        
+
                         # Check if the chunk contains content
                         if self._has_content_in_delta(chunk_data):
                             content = chunk_data["choices"][0]["delta"]["content"]
                             text += content
                             yield text
-                        
+
                         last_chunk = chunk_data
-                    
+
                     # Ensure the last chunk has the complete message
                     if "choices" not in last_chunk or not last_chunk["choices"]:
                         last_chunk["choices"] = [{}]
-                    
+
                     # Set the full text in the last chunk for reference
                     last_chunk["choices"][0]["message"] = {
                         "role": "assistant",
                         "content": text
                     }
-                
+
                 return ModelResponse(astream=generate_stream_async())
             else:
                 # Handle non-streaming response
                 response_data = response.model_dump()
-                
+
                 # Track token usage
                 if "usage" in response_data:
                     # Record usage information in the tracker
                     self._track_token_usage(response_data["usage"])
-                
+
                 if self._has_content_in_message(response_data):
                     content = response_data["choices"][0]["message"]["content"]
-                    
+
                     # Create response with usage and model info
                     model_response = ModelResponse(
                         text=content, 
@@ -272,11 +273,11 @@ class OpenAIChatAdapter(ModelAdapterBase):
                             "config_name": self.config_name
                         }
                     )
-                    
+
                     return model_response
                 else:
                     raise ValueError(f"Invalid response format: {response_data}")
-                
+
         except Exception as e:
             logger.error(f"Error calling OpenAI API asynchronously: {str(e)}")
             raise
@@ -321,26 +322,26 @@ class OpenAIChatAdapter(ModelAdapterBase):
         except Exception as e:
             logger.error(f"Failed to asynchronously list models: {e}")
             raise
-    
+
     def _validate_messages(self, messages: List[Dict]) -> None:
         """Validate message format."""
         if not isinstance(messages, list):
             raise ValueError(
                 f"OpenAI messages must be a list, got {type(messages)}"
             )
-        
+
         if not all("role" in msg for msg in messages):
             raise ValueError(
                 "Each message must contain a 'role' key"
             )
-            
+
         # For content, we need to check if it's either a string or a list of content parts
         for msg in messages:
             if "content" not in msg and not isinstance(msg.get("content"), (str, list, type(None))):
                 raise ValueError(
                     "Message content must be a string, list of content parts, or None"
                 )
-            
+
     def format(self, *args: Union[Message, Sequence[Message]]) -> List[Dict]:
         """
         Format messages for the OpenAI chat completions API.
@@ -355,7 +356,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
         for arg in args:
             if arg is None:
                 continue
-                
+
             if isinstance(arg, Message):
                 # Process message based on content type and whether images are present
                 if arg.images:
@@ -369,7 +370,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
                             "type": "text",
                             "text": self._convert_to_str(arg.content)
                         }]
-                    
+
                     # Add each image as an image_url part
                     for image_path in arg.images:
                         if os.path.exists(image_path):
@@ -381,7 +382,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
                             })
                         else:
                             logger.warning(f"Image file not found: {image_path}")
-                    
+
                     msg_dict = {
                         "role": arg.role,
                         "content": content_parts
@@ -411,7 +412,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
                                 "type": "text",
                                 "text": self._convert_to_str(part)
                             })
-                    
+
                     msg_dict = {
                         "role": arg.role,
                         "content": content_parts
@@ -422,11 +423,11 @@ class OpenAIChatAdapter(ModelAdapterBase):
                         "role": arg.role,
                         "content": self._convert_to_str(arg.content)
                     }
-                
+
                 # Only include name if it exists
                 if arg.name:
                     msg_dict["name"] = arg.name
-                
+
                 messages.append(msg_dict)
             elif isinstance(arg, (list, tuple)):
                 # Process sequences of messages
@@ -435,9 +436,9 @@ class OpenAIChatAdapter(ModelAdapterBase):
                 raise TypeError(
                     f"Expected Message or sequence of Messages, got {type(arg)}"
                 )
-                
+
         return messages
-    
+
     @staticmethod
     def _encode_image(image_path: str) -> str:
         """
@@ -451,7 +452,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
         """
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode("utf-8")
-    
+
     @staticmethod
     def _get_image_extension(image_path: str) -> str:
         """
@@ -475,7 +476,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
         else:
             # Default to jpeg for unknown types
             return 'jpeg'
-    
+
     @staticmethod
     def _has_content_in_delta(response: Dict) -> bool:
         """Check if a streaming response chunk contains content."""
@@ -487,7 +488,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
             )
         except (KeyError, IndexError):
             return False
-    
+
     @staticmethod
     def _has_content_in_message(response: Dict) -> bool:
         """Check if a response contains a message with content."""
@@ -499,7 +500,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
             )
         except (KeyError, IndexError):
             return False
-    
+
     @staticmethod
     def _convert_to_str(content: Any) -> str:
         """Convert content to string."""
@@ -509,7 +510,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
             return str(content)
         else:
             return json.dumps(content)
-            
+
     @staticmethod
     def _convert_to_content(content: Any) -> Union[str, List[Dict]]:
         """
@@ -524,11 +525,11 @@ class OpenAIChatAdapter(ModelAdapterBase):
         # If content is already a list of content parts, return as is
         if isinstance(content, list) and all(isinstance(item, dict) for item in content):
             return content
-            
+
         # Handle string content
         if isinstance(content, str):
             return content
-            
+
         # Handle dict with image_url or other special content
         if isinstance(content, dict):
             # If content is a dict with image_url, format it for OpenAI
@@ -551,7 +552,7 @@ class OpenAIChatAdapter(ModelAdapterBase):
                         "image_url": content["image_url"]
                     }
                 ]
-                
+
         # For other types, use json.dumps as fallback
         return json.dumps(content)
 
@@ -564,7 +565,7 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
     and other APIs that follow the same format (like local deployments).
     Supports both synchronous and asynchronous calls.
     """
-    
+
     def __init__(
         self,
         config_name: str,
@@ -588,9 +589,9 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
             **kwargs: Additional parameters.
         """
         super().__init__(config_name=config_name, model_name=model_name, **kwargs)
-        
+
         self.generate_args = generate_args or {}
-        
+
         # Initialize the OpenAI client
         try:
             import openai
@@ -598,13 +599,14 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
             raise ImportError(
                 "OpenAI package not found. Please install it using: pip install openai"
             )
-        
+
+        client_args = client_args or {}
         self.client = openai.OpenAI(
             api_key=api_key,
             organization=organization,
             **client_args
         )
-        
+
         # Initialize the OpenAI async client
         try:
             from openai import AsyncOpenAI
@@ -619,7 +621,7 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
                 organization=organization,
                 **(client_args or {})
             )
-    
+
     def __call__(
         self,
         texts: Union[str, List[str]],
@@ -637,34 +639,34 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
         """
         # Merge default arguments with provided ones
         call_kwargs = {**self.generate_args, **kwargs}
-        
+
         # Ensure texts is a list
         if isinstance(texts, str):
             texts = [texts]
-        
+
         # Set up API call parameters
         call_kwargs.update({
             "model": self.model_name,
             "input": texts
         })
-        
+
         try:
             # Make the API call
             response = self.client.embeddings.create(**call_kwargs)
             response_data = response.model_dump()
-            
+
             # Extract embeddings
             if "data" in response_data and len(response_data["data"]) > 0:
                 embeddings = [item["embedding"] for item in response_data["data"]]
-                
+
                 return ModelResponse(embedding=embeddings, raw=response_data)
             else:
                 raise ValueError(f"Invalid response format: {response_data}")
-                
+
         except Exception as e:
             logger.error(f"Error calling OpenAI Embedding API: {str(e)}")
             raise
-    
+
     async def acall(
         self,
         texts: Union[str, List[str]],
@@ -682,17 +684,17 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
         """
         # Merge default arguments with provided ones
         call_kwargs = {**self.generate_args, **kwargs}
-        
+
         # Ensure texts is a list
         if isinstance(texts, str):
             texts = [texts]
-        
+
         # Set up API call parameters
         call_kwargs.update({
             "model": self.model_name,
             "input": texts
         })
-        
+
         try:
             # Use async client if available, otherwise run sync client in thread
             if self.async_client:
@@ -703,21 +705,21 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
                     None, 
                     lambda: self.client.embeddings.create(**call_kwargs)
                 )
-                
+
             response_data = response.model_dump()
-            
+
             # Extract embeddings
             if "data" in response_data and len(response_data["data"]) > 0:
                 embeddings = [item["embedding"] for item in response_data["data"]]
-                
+
                 return ModelResponse(embedding=embeddings, raw=response_data)
             else:
                 raise ValueError(f"Invalid response format: {response_data}")
-                
+
         except Exception as e:
             logger.error(f"Error calling OpenAI Embedding API asynchronously: {str(e)}")
             raise
-        
+
     def list_models(self) -> List[str]:
         """
         Synchronously retrieve the list of available model IDs
@@ -775,7 +777,7 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
         for arg in args:
             if arg is None:
                 continue
-                
+
             if isinstance(arg, str):
                 # Plain text
                 texts.append(arg)
@@ -789,9 +791,9 @@ class OpenAIEmbeddingAdapter(ModelAdapterBase):
                 raise TypeError(
                     f"Expected str, Message, or sequence, got {type(arg)}"
                 )
-                
+
         return texts
-    
+
     @staticmethod
     def _convert_to_str(content: Any) -> str:
         """Convert content to string."""

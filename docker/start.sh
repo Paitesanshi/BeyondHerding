@@ -17,9 +17,10 @@ fi
 
 # Display startup information
 echo "🌐 YuLan-OneSim is starting..."
-echo "📍 Web interface: http://localhost"
-echo "📍 API documentation: http://localhost/docs"
+echo "📍 Web interface: http://localhost:8000"
+echo "📍 API documentation: http://localhost:8000/docs"
 echo "📍 CLI tool: docker exec -it <container_id> yulan-onesim-cli --help"
+echo "📍 Log path: /app/logs/app.log"
 
 # Start supervisor to manage all services
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

@@ -2,13 +2,13 @@ from typing import Any, List, Optional
 import json
 import asyncio
 from loguru import logger
-from agentgo.models import JsonBlockParser
-from agentgo.agent import GeneralAgent
-from agentgo.profile import AgentProfile
-from agentgo.memory import MemoryStrategy
-from agentgo.planning import PlanningBase
-from agentgo.events import *
-from agentgo.relationship import RelationshipManager
+from onesim.models import JsonBlockParser
+from onesim.agent import GeneralAgent
+from onesim.profile import AgentProfile
+from onesim.memory import MemoryStrategy
+from onesim.planning import PlanningBase
+from onesim.events import *
+from onesim.relationship import RelationshipManager
 from .events import *
 
 class Group(GeneralAgent):
@@ -30,7 +30,7 @@ class Group(GeneralAgent):
 
         # Add the decision if it's not already recorded
         individual_id = event.individual_id
-        cooperation_willingness = eval(event.cooperation_willingness)
+        cooperation_willingness = event.cooperation_willingness
 
         if individual_id not in received_decisions:
             received_decisions.append(individual_id)

@@ -23,6 +23,7 @@ required_packages = [
     "faiss-cpu>=1.9.0",
     "pyyaml",
     "openai",
+    "volcengine-python-sdk",
 ]
 
 # Optional dependencies for tuning

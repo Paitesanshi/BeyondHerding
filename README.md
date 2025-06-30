@@ -224,6 +224,8 @@ The simulation configuration file controls general simulation parameters:
 }
 ```
 
+**Note:** The `model_config_name` values under `agent.memory` (e.g., for `long_term_storage` and the `relevance` metric) must match the `config_name` of an embedding model defined in `config/model_config.json`.
+
 ### Model Configuration (`config/model_config.json`)
 
 Specifies the LLMs and embedding models used by the simulator:
