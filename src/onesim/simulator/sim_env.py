@@ -700,7 +700,7 @@ class BasicSimEnv:
                 # Log which agents didn't complete
                 incomplete = [agent_id for agent_id, count in self.ended_agents.items()
                             if count < self.current_step]
-                logger.warning(f"{len(incomplete)} agents didn't complete: {incomplete}")
+                # logger.warning(f"{len(incomplete)} agents didn't complete: {incomplete}")
 
             # Reset pause time accumulator for the next round
             self._pause_cumulative_time = 0.0
@@ -1016,9 +1016,9 @@ class BasicSimEnv:
             # Dispatch start events for all targets
             for agent_type in self.start_targets.keys():
                 for target_id in self.start_targets[agent_type]:
-                    event = await self._create_start_event(target_id)
-                    await self.queue_event(event.to_dict())
-                    await self.event_bus.dispatch_event(event)
+                    start_event = await self._create_start_event(target_id)
+                    await self.queue_event(start_event.to_dict())
+                    await self.event_bus.dispatch_event(start_event)
 
     def terminate(self, event: Event, **kwargs: Any) -> None:
         """Handle agent termination with bus state awareness. This should be async due to lock usage"""
@@ -1798,8 +1798,9 @@ class BasicSimEnv:
 
             # Acquire lock before updating data
             async with lock:
-                # Update the requested data
-                success = self.update_data(event.key, event.value)
+                # Update the requested data (await the async method)
+                await self.update_data(event.key, event.value)
+                success = True
 
                 # Create and send response event
                 response_event = DataUpdateResponseEvent(

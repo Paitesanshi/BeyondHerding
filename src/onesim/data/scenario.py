@@ -164,10 +164,12 @@ class ScenarioManager:
             return []
         
         if tag:
-            # Filter by tag
+            # Filter by tag with safer SQL construction
             tag_conditions = []
-            for tag in tag.split():
-                tag_conditions.append(f"tags ? '{tag}'")
+            # Sanitize tag input to prevent injection
+            safe_tags = [t.strip() for t in tag.split() if t.strip().isalnum()]
+            for safe_tag in safe_tags:
+                tag_conditions.append(f"tags ? '{safe_tag}'")
             
             query = f"""
             SELECT * FROM scenarios 

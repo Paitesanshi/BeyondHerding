@@ -83,6 +83,10 @@ class TrailManager:
             return trail_id
         except Exception as e:
             logger.error(f"Failed to create trail: {e}")
+            logger.error(f"Trail data: trail_id={trail_id}, scenario_id={scenario_id}, name={name}")
+            # Check if the error is due to foreign key constraint
+            if "scenario_id" in str(e).lower():
+                logger.error(f"Scenario {scenario_id} may not exist. Please create scenario first.")
             raise
     
     async def get_trail(self, trail_id: str) -> Dict[str, Any]:

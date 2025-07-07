@@ -347,8 +347,8 @@ async def init_database_component(db_config: DatabaseConfig):
             "password": db_config.password
         })
         
-        # Initialize database schema
-        data_manager.initialize_schema()
+        # Initialize database schema asynchronously
+        await data_manager.initialize_schema_async()
         logger.info("Data storage module initialized")
         
         # Register the component as initialized

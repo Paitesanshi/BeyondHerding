@@ -27,7 +27,7 @@
                 "long_term_storage": {
                     "class": "VectorMemoryStorage",
                     "capacity": 100,
-                    "model_config_name": "openai_embedding-bert"
+                    "model_config_name": "vllm-embedding-bert"
                 }
             },
             "metric_weights": {
@@ -52,7 +52,7 @@
                 },
                 "relevance": {
                     "class": "RelevanceMetric",
-                    "model_config_name": "openai_embedding-bert",
+                    "model_config_name": "vllm-embedding-bert",
                     "weight": 0.5
                 }
             }

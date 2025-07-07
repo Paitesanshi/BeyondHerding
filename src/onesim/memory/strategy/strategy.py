@@ -34,7 +34,7 @@ class MemoryStrategy(ABC):
             self.model = model_manager.get_model(
                 config_name=model_config_name,
             )
-        
+
         self._initialize_components(config)
 
     def _initialize_components(self, config: Dict[str, Any]):
@@ -66,13 +66,13 @@ class MemoryStrategy(ABC):
         :return: Storage instance
         """
         storage_type = config.get('class')
-        
+
         # Example storage type mapping
         storage_map = {
             'ListMemoryStorage': ListMemoryStorage,
             'VectorMemoryStorage': VectorMemoryStorage
         }
-        
+
         storage_class = storage_map.get(storage_type)
         if not storage_class:
             raise ValueError(f"Unsupported storage type: {storage_type}")
@@ -86,18 +86,18 @@ class MemoryStrategy(ABC):
         :return: Operation instance
         """
         operation_type = config.get('class')
-        
+
         # Example operation type mapping
         operation_map = {
             'AddMemoryOperation': AddMemoryOperation,
             'RetrieveMemoryOperation': RetrieveMemoryOperation,
             'RemoveMemoryOperation': RemoveMemoryOperation,
         }
-        
+
         operation_class = operation_map.get(operation_type)
         if not operation_class:
             raise ValueError(f"Unsupported operation type: {operation_type}")
-        
+
         return operation_class()
 
     def _create_metric(self, config: Dict[str, Any]) -> MemoryMetric:
@@ -108,20 +108,19 @@ class MemoryStrategy(ABC):
         :return: Metric instance
         """
         metric_type = config.get('class')
-        
+
         # Example metric type mapping
         metric_map = {
             'RelevanceMetric': RelevanceMetric,
             'RecencyMetric': RecencyMetric,
             'ImportanceMetric': ImportanceMetric
         }
-        
+
         metric_class = metric_map.get(metric_type)
         if not metric_class:
             raise ValueError(f"Unsupported metric type: {metric_type}")
-        
-        return metric_class(config)
 
+        return metric_class(config)
 
     def set_agent_context(self, agent_context: AgentContext):
         """
@@ -148,7 +147,22 @@ class MemoryStrategy(ABC):
         
         :return: List of all memories
         """
-        return [await storage.get_all() for storage in self._storage_map.values()]
+        all_memories = {}
+        for key, storage in self._storage_map.items():
+            all_memories[key] = await storage.get_all()
+        return all_memories
+
+    async def get_all_memory_str(self):
+        """
+        Get all memories from all storages
+
+        :return: List of all memories
+        """
+        all_memories = {}
+        for key, storage in self._storage_map.items():
+            memories = await storage.get_all()
+            all_memories[key] = [memory.to_dict() for memory in memories]
+        return all_memories
 
     @abstractmethod
     async def retrieve(self, query, top_k):
@@ -172,7 +186,7 @@ class MemoryStrategy(ABC):
         # If no storages are available, raise error
         if not self._storage_map:
             raise ValueError("No storage available in the strategy")
-            
+
         # Return the first storage by default
         # Subclasses should override this method for more sophisticated selection logic
         return next(iter(self._storage_map.values()))

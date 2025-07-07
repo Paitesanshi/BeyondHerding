@@ -33,7 +33,7 @@ class GeneralAgent(AgentBase):
                  planning: PlanningBase=None,
                  relationship_manager: RelationshipManager=None) -> None:
         super().__init__(sys_prompt, model_config_name)
-        
+
         self._queue = asyncio.Queue()
         '''
         The queue where the agent will store the events.
@@ -49,7 +49,6 @@ class GeneralAgent(AgentBase):
         self.profile = profile
         self.memory=memory
         self.planning=planning
-        #self.meory=memory
         if relationship_manager is None:
             self.relationship_manager = RelationshipManager(profile_id=self.profile.get_agent_profile_id())
         else:
@@ -70,13 +69,13 @@ class GeneralAgent(AgentBase):
         }
         # Register event handler for termination events
         self.register_event("EndEvent", "handle_end_event")
-        
+
         # Register event handlers for data access
         self.register_event("DataEvent", "handle_data_event")
         self.register_event("DataResponseEvent", "handle_data_response")
         self.register_event("DataUpdateEvent", "handle_data_update_event")
         self.register_event("DataUpdateResponseEvent", "handle_data_update_response")
-        
+
         # Data request futures dictionary
         self._data_futures: Dict[str, Future] = {}
         # Data update futures dictionary
@@ -84,7 +83,6 @@ class GeneralAgent(AgentBase):
 
     def is_stopped(self) -> bool:
         return self.stopped
-
 
     def register_event(self, event_kind: str, ability_name: str) -> None:
         if event_kind not in self._event_schema:
@@ -97,7 +95,6 @@ class GeneralAgent(AgentBase):
     async def get_event(self) -> Event:
         pass
 
-    
     def register_hook(self, hook_name: str, hook_function: Callable):
         if hook_name in self._hooks:
             self._hooks[hook_name].append(hook_function)
@@ -120,7 +117,7 @@ class GeneralAgent(AgentBase):
         reses = await method(event)
         if not isinstance(reses, list):
             reses = [reses]
-            
+
         for res in reses:
             if res is None:
                 continue
@@ -156,7 +153,7 @@ class GeneralAgent(AgentBase):
             except Exception as e:
                 logger.error(f"Error in agent {self.profile.agent_type}(ID:{self.profile_id}) run loop: {e}")
                 self._queue.task_done()
-                
+
     async def handle_end_event(self, event: Event) -> None:
         """
         Handle termination event to gracefully stop the agent.
@@ -165,16 +162,15 @@ class GeneralAgent(AgentBase):
             event (Event): The EndEvent containing termination details
         """
 
-        
         # Perform any cleanup tasks
         try:
-            
+
             # Set stopped flag to terminate the run loop
             self.stopped = True
             logger.info(f"Agent {self.profile.agent_type}(ID:{self.profile_id}) received termination event: {event.get('reason', 'unknown')}")
         except Exception as e:
             logger.error(f"Error during agent {self.profile.agent_type}(ID:{self.profile_id}) termination: {e}")
-        
+
         # No response event needed for termination
         return None
 
@@ -214,7 +210,7 @@ class GeneralAgent(AgentBase):
             parser = JsonBlockParser()
             res = parser.parse(response)
             memory=res.parsed['memory']
-            #memory_msg=Message(self.name, memory, role="assistant")
+            # memory_msg=Message(self.name, memory, role="assistant")
             if self.memory:
                 await self.memory.add(MemoryItem(self.agent_id,memory))
             return memory
@@ -254,14 +250,14 @@ class GeneralAgent(AgentBase):
                 relationship_guidance = "Note: No available relationships found. You can send events to the environment (agent type: EnvAgent, ID: ENV)."
             else:
                 relationship_guidance = "Note: No available relationships found and no default targets available."
-        
-        #relations=self.relationship_manager.get_all_relationships()
+
+        # relations=self.relationship_manager.get_all_relationships()
         if self.planning:
             planning=await self.planning.plan(profile=profile_str,memory=memory,observation=observation,instruction=instruction,relationship=available_relations) 
             planning="### Planning:\n"+planning+"\n"
         else:
             planning=""
-            
+
         # 构建Prompt，包含Profile、Memory、Observation和Instruction部分
         prompt_text = f"""
         ### Agent Profile:
@@ -298,7 +294,7 @@ class GeneralAgent(AgentBase):
         )
         response = await self.model.acall(prompt)
         processing_time = time.time() - start_time
-        
+
         try:
             parser = JsonBlockParser()
             res = parser.parse(response)
@@ -324,32 +320,27 @@ class GeneralAgent(AgentBase):
                 'reason': None
             }
             await self._record_decision(decision_data)
-            
+
             if self.memory:
                 event_memory = await self.generate_memory(instruction, observation, reaction)
             else:
                 event_memory = ""
-                
+
             logger.info(f"{self.profile.agent_type}(ID:{self.profile_id}) Action: {action_name} - Event Log: "
             f"Observation: {observation or 'None'}, "
             f"Reaction: {json.dumps(reaction, indent=2)}, "
             f"Memory: {json.dumps(event_memory, indent=2)}")
-            
+
             return reaction
-            
+
         except json.JSONDecodeError:
             logger.error(f"{self.profile.agent_type}(ID:{self.profile_id}) - LLM response is not valid JSON.{prompt}")
             raise ValueError("LLM response is not valid JSON.")
 
-    
-
-
-
-
     async def get_memory(self):
         if not self.memory:
             return []
-        return await self.memory.get_all_memory()
+        return await self.memory.get_all_memory_str()
 
     def add_relationship(self, target_id: str, description: str,target_info: Optional[Dict]=None):
         self.relationship_manager.add_relationship(target_id, description,target_info)
@@ -368,7 +359,7 @@ class GeneralAgent(AgentBase):
 
     def create_context(self):
         return AgentContext(self.profile_id,self.profile,self.relationship_manager)
-    
+
     async def interact(self, message: str, chat_history: List[Dict[str, Any]] = None):
         """
         Process a user chat message and generate an in-character response from the agent.
@@ -387,7 +378,7 @@ class GeneralAgent(AgentBase):
             for entry in chat_history[-5:]:  # Only use the last 5 messages for context
                 role = "User" if entry.get("role") == "user" else self.profile.get_data("name") or "Agent"
                 context += f"{role}: {entry.get('message', '')}\n"
-                
+
         # Construct a prompt that focuses on in-character role-playing
         instruction = f"""A user is talking directly to you. Respond as your character would in a conversation.
 Stay completely in character based on your profile and respond naturally to the user's message.
@@ -402,9 +393,9 @@ Respond in JSON format with a single 'message' field containing your response. F
 
         # Add context from chat history if available
         observation = f"{context}\nUser's message: {message}"
-        
+
         reaction = await self.generate_reaction(instruction, observation)
-        
+
         # Make sure we have a message field for the frontend
         if isinstance(reaction, dict) and "message" not in reaction:
             # If there's no message field but there is a response or content field, use that
@@ -417,7 +408,7 @@ Respond in JSON format with a single 'message' field containing your response. F
             # Otherwise create a message from the reaction
             else:
                 reaction["message"] = str(reaction)
-                
+
         return reaction
 
     @property
@@ -426,14 +417,14 @@ Respond in JSON format with a single 'message' field containing your response. F
 
     def get_profile_str(self,include_private: bool = None):
         return self.profile.get_profile_str(include_private)
-    
+
     def get_profile(self, include_private: bool = None):
         return self.profile.get_profile(include_private)
 
     def set_env(self, env):
         """Set the simulation environment associated with this agent."""
         self.env = env
-        
+
     async def record_event(self, event: Event):
         """
         Record an event for data storage
@@ -441,8 +432,17 @@ Respond in JSON format with a single 'message' field containing your response. F
         Args:
             event: Event object
         """
-        
-        if event.event_kind in ['DataEvent', 'DataUpdateEvent', 'DataResponseEvent', 'DataUpdateResponseEvent','PauseEvent','ResumeEvent', 'EndEvent']:
+
+        if event.event_kind in [
+            'DataEvent',
+            'DataUpdateEvent',
+            'DataResponseEvent',
+            'DataUpdateResponseEvent',
+            'PauseEvent',
+            'ResumeEvent',
+            'EndEvent',
+            'StartEvent',
+        ]:
             return
 
         # Check if we have a local environment reference
@@ -468,7 +468,7 @@ Respond in JSON format with a single 'message' field containing your response. F
                 )
             else:
                 logger.warning(f"Unable to record event: No environment reference and not in worker mode")
-    
+
     async def _record_decision(self, decision_data: Dict[str, Any]):
         """
         Record a decision for data storage
@@ -497,7 +497,6 @@ Respond in JSON format with a single 'message' field containing your response. F
                 )
             else:
                 logger.warning(f"Unable to record decision: No environment reference and not in worker mode")
-
 
     async def get_data(self, key: str,default: Optional[Any] = None):
         """Get data from agent profile"""
@@ -543,9 +542,9 @@ Respond in JSON format with a single 'message' field containing your response. F
                 error=str(e),
                 parent_event_id=event.event_id
             )
-            
+
             return error_response
-    
+
     async def handle_data_response(self, event: DataResponseEvent) -> None:
         """
         Handle incoming data response events
@@ -556,19 +555,19 @@ Respond in JSON format with a single 'message' field containing your response. F
         # Check if we're waiting for this response
         if event.request_id in self._data_futures:
             future = self._data_futures.pop(event.request_id)
-            
+
             if not future.done():
                 if event.success:
                     future.set_result(event.data_value)
                 else:
                     future.set_exception(ValueError(event.error or "Unknown error"))
-            
+
             # If we have a sync event, set it
             if hasattr(self, '_sync_event'):
                 self._sync_event.set()
                 # Reset for next operation
                 self._sync_event.clear()
-    
+
     async def get_env_data(self, key: str, default: Optional[Any] = None, parent_event_id: Optional[str] = None) -> Any:
         """
         Get data from the environment
@@ -583,11 +582,11 @@ Respond in JSON format with a single 'message' field containing your response. F
         """
         # Create a unique request ID
         request_id = f"agent_env_req_{time.time()}_{id(self)}"
-        
+
         # Create future for response
         future = Future()
         self._data_futures[request_id] = future
-        
+
         # Create data request event
         data_event = DataEvent(
             from_agent_id=self.profile_id,
@@ -599,10 +598,10 @@ Respond in JSON format with a single 'message' field containing your response. F
             request_id=request_id,
             parent_event_id=parent_event_id
         )
-        
+
         # Send the request
         await self._event_bus_queue.put(data_event)
-        
+
         # Wait for response with timeout
         try:
             if hasattr(self, '_sync_event'):
@@ -620,7 +619,7 @@ Respond in JSON format with a single 'message' field containing your response. F
             logger.error(f"Error getting environment data: {e}")
             self._data_futures.pop(request_id, None)
             return default
-    
+
     async def get_agent_data(self, agent_id: str, key: str, default: Optional[Any] = None, parent_event_id: Optional[str] = None) -> Any:
         """
         Get data from another agent
@@ -637,14 +636,14 @@ Respond in JSON format with a single 'message' field containing your response. F
         # Prevent self-queries
         if agent_id == self.profile_id:
             return await self.get_data(key)
-            
+
         # Create a unique request ID
         request_id = f"agent_req_{time.time()}_{id(self)}"
-        
+
         # Create future for response
         future = Future()
         self._data_futures[request_id] = future
-        
+
         # Create data request event
         data_event = DataEvent(
             from_agent_id=self.profile_id,
@@ -656,10 +655,10 @@ Respond in JSON format with a single 'message' field containing your response. F
             request_id=request_id,
             parent_event_id=parent_event_id
         )
-        
+
         # Send the request
         await self._event_bus_queue.put(data_event)
-        
+
         # Wait for response with timeout
         try:
             if hasattr(self, '_sync_event'):
@@ -694,11 +693,11 @@ Respond in JSON format with a single 'message' field containing your response. F
         Returns:
             Optional[DataUpdateResponseEvent]: Response event or None
         """
-            
+
         try:
             # Update data in profile - Added await here
             success = await self.update_data(event.key, event.value)
-            
+
             # Create response event
             response = DataUpdateResponseEvent(
                 from_agent_id=self.profile_id,
@@ -708,7 +707,7 @@ Respond in JSON format with a single 'message' field containing your response. F
                 success=success,
                 parent_event_id=event.event_id
             )
-            
+
             return response
         except Exception as e:
             # Create error response
@@ -721,9 +720,9 @@ Respond in JSON format with a single 'message' field containing your response. F
                 error=str(e),
                 parent_event_id=event.event_id
             )
-            
+
             return error_response
-    
+
     async def handle_data_update_response(self, event: DataUpdateResponseEvent) -> None:
         """
         Handle incoming data update response events
@@ -734,19 +733,19 @@ Respond in JSON format with a single 'message' field containing your response. F
         # Check if we're waiting for this response
         if event.request_id in self._data_update_futures:
             future = self._data_update_futures.pop(event.request_id)
-            
+
             if not future.done():
                 if event.success:
                     future.set_result(True)
                 else:
                     future.set_exception(ValueError(event.error or "Unknown error"))
-            
+
             # If we have a sync event, set it
             if hasattr(self, '_sync_event'):
                 self._sync_event.set()
                 # Reset for next operation
                 self._sync_event.clear()
-    
+
     async def update_env_data(self, key: str, value: Any, parent_event_id: Optional[str] = None) -> bool:
         """
         Update data in the environment with distributed locking
@@ -761,11 +760,11 @@ Respond in JSON format with a single 'message' field containing your response. F
         """
         # Create a unique request ID
         request_id = f"agent_env_update_req_{time.time()}_{id(self)}"
-        
+
         # Create future for response
         future = Future()
         self._data_update_futures[request_id] = future
-        
+
         # Create data update event
         data_update_event = DataUpdateEvent(
             from_agent_id=self.profile_id,
@@ -777,17 +776,17 @@ Respond in JSON format with a single 'message' field containing your response. F
             request_id=request_id,
             parent_event_id=parent_event_id
         )
-        
+
         # Get distributed lock for this key
         lock_id = f"env_data_lock_{key}"
         lock = await get_lock(lock_id)
-        
+
         try:
             # Acquire lock before sending update
             async with lock:
                 # Send the request
                 await self._event_bus_queue.put(data_update_event)
-                
+
                 # Wait for response with timeout
                 try:
                     if hasattr(self, '_sync_event'):
@@ -808,7 +807,7 @@ Respond in JSON format with a single 'message' field containing your response. F
         except Exception as e:
             logger.error(f"Error acquiring lock for environment data update: {e}")
             return False
-    
+
     async def update_agent_data(self, agent_id: str, key: str, value: Any, parent_event_id: Optional[str] = None) -> bool:
         """
         Update data in another agent with distributed locking
@@ -825,14 +824,14 @@ Respond in JSON format with a single 'message' field containing your response. F
         # Prevent self-queries
         if agent_id == self.profile_id:
             return await self.update_data(key, value)
-            
+
         # Create a unique request ID
         request_id = f"agent_update_req_{time.time()}_{id(self)}"
-        
+
         # Create future for response
         future = Future()
         self._data_update_futures[request_id] = future
-        
+
         # Create data update event
         data_update_event = DataUpdateEvent(
             from_agent_id=self.profile_id,
@@ -844,17 +843,17 @@ Respond in JSON format with a single 'message' field containing your response. F
             request_id=request_id,
             parent_event_id=parent_event_id
         )
-        
+
         # Get distributed lock for this agent and key
         lock_id = f"agent_data_lock_{agent_id}_{key}"
         lock = await get_lock(lock_id)
-        
+
         try:
             # Acquire lock before sending update
             async with lock:
                 # Send the request
                 await self._event_bus_queue.put(data_update_event)
-                
+
                 # Wait for response with timeout
                 try:
                     if hasattr(self, '_sync_event'):
@@ -875,7 +874,6 @@ Respond in JSON format with a single 'message' field containing your response. F
         except Exception as e:
             logger.error(f"Error acquiring lock for agent data update: {e}")
             return False
-
 
     async def add_memory(self, memory: str):
         if not self.memory:

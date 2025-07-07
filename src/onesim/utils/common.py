@@ -20,7 +20,6 @@ def normalize_for_hashing(profile_data: Dict[str, Any]) -> tuple:
     return tuple(sorted(normalized_data.items()))  # Sort it
 
 
-
 def convert_sql_data(obj):
     if isinstance(obj, dict):
         return {k: convert_sql_data(v) for k, v in obj.items()}
@@ -55,14 +54,12 @@ def call_llm_sync(model,prompt):
     except Exception as e:
         # Re-raise exception with additional context
         raise Exception(f"Error calling LLM model: {str(e)}")
-    
+
 
 def gen_id():
     """Generate a random id that should
     avoid collisions"""
-    return str(uuid.uuid4())[:8]
-
-
+    return str(uuid.uuid4())
 
 
 def create_directory(path: str):
