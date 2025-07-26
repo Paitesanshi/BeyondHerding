@@ -1,22 +1,13 @@
 {
     "chat": [
         {
-            "provider": "openai",
-            "config_name": "openai-gpt4o",
-            "model_name": "gpt-4o",
-            "api_key": "sk-xxx",
-            "generate_args": {
-                "temperature": 0
-            }
-        },
-        {
             "provider": "vllm",
             "config_name": "vllm-qwen",
-            "model_name": "Qwen2.5-14B-Instruct",
+            "model_name": "/data/pretrain_dir/Qwen2.5-14B-Instruct",
             "api_key": "sk-xxx",
             "client_args": {
                 "max_retries": 3,
-                "base_url": "http://localhost:9889/v1/"
+                "base_url": "http://111.6.167.248:9887/v1/"
             },
             "generate_args": {
                 "temperature": 0
@@ -27,11 +18,11 @@
         {
             "provider": "vllm",
             "config_name": "vllm-embedding-bert",
-            "model_name": "bge-base-en-v1.5",
+            "model_name": "/data/pretrain_dir/bge-base-en-v1.5",
             "api_key": "sk-xxx",
             "client_args": {
                 "max_retries": 3,
-                "base_url": "http://localhost:9890/v1/"
+                "base_url": "http://111.6.167.248:9890/v1/"
             }
         }
     ]

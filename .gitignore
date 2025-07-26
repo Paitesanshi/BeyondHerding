@@ -123,3 +123,4 @@ logs/
 generation_statistics.json
 node_modules/
 research/
+*results/
